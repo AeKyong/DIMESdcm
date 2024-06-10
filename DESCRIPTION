@@ -12,4 +12,8 @@ LazyData: true
 Depends: 
     abind,
     R (>= 2.10),
-    plumber
+    plumber,
+    coda,
+    modeest,
+    parallel,
+    readxl
