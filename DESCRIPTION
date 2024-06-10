@@ -16,4 +16,5 @@ Depends:
     coda,
     modeest,
     parallel,
-    readxl
+    readxl,
+    extraDistr
