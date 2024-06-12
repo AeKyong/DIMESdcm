@@ -1,5 +1,5 @@
 
-simulateEDCMfromChains = function(nObs, nItems, itemParameterChains){
+simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, abilityQ){
 
   # get location of beta intercept and beta lambda parameters
   betaInterceptCols = grep(pattern = "^beta_intercept\\[", x = colnames(itemParameterChains))
@@ -19,54 +19,46 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains){
   }
 
   # sample item parameters
-  interceptSamples = NULL
-  lambdaSamples = NULL
-  betaInterceptSamples = NULL
-  betaLambdaSamples = NULL
-  itemMat = matrix(0, nrow=1, ncol=originalItemsInPool)
-  covMat = matrix(0, nrow=1, ncol=originalCovariatesInPool)
-
-  for (sample in 1:length(samplechain)){
-
-    if (sample == length(samplechain)){
+      # when sampled items N == original items N
       if (nItems %% originalItemsInPool == 0) {
-        interceptSample =  itemParameterChains[samplechain[sample], interceptCols[1:originalItemsInPool]]
-        lambdaSample = itemParameterChains[samplechain[sample], lambdaCols[1:originalItemsInPool]]
-        betaInterceptSample = itemParameterChains[samplechain[sample], betaInterceptCols[1:originalCovariatesInPool]]
-        betaLambdaSample = itemParameterChains[samplechain[sample], betaLambdaCols[1:originalCovariatesInPool]]
+        interceptSamples =  itemParameterChains[samplechain, interceptCols[1:originalItemsInPool]]
+        lambdaSamples = itemParameterChains[samplechain, lambdaCols[1:originalItemsInPool]]
+        betaInterceptSamples = itemParameterChains[samplechain, betaInterceptCols[1:originalCovariatesInPool]]
+        betaLambdaSamples = itemParameterChains[samplechain, betaLambdaCols[1:originalCovariatesInPool]]
+        simItemCovs = itemcovs
 
+      # when sampled items N != original items N
       }else{
-        itemSample = sample(x = 1:originalItemsInPool, size = nItems %% originalItemsInPool, replace = FALSE)
-        interceptSample =  itemParameterChains[samplechain[sample], interceptCols[itemSample]]
-        lambdaSample =  itemParameterChains[samplechain[sample], lambdaCols[itemSample]]
+        itemSamples = sample(x = 1:originalItemsInPool, size = nItems %% originalItemsInPool, replace = FALSE)
+        interceptSamples =  itemParameterChains[samplechain, interceptCols[itemSamples]]
+        lambdaSamples =  itemParameterChains[samplechain, lambdaCols[itemSamples]]
 
         # create a matrix marking the sampled items
-        itemMat[,itemSample] = 1
+        itemMat = matrix(0, nrow=1, ncol=originalItemsInPool)
+        itemMat[,itemSamples] = 1
         # create a matrix marking the items properties associated with sampled items
-        covMat = itemMat %*% itemcovsMat
+        covMat = itemMat %*% itemcovs
         # draw the sampled item properties
-        covSample = which(covMat>0)
+        covSamples = which(covMat>0)
 
-        betaInterceptSample =  itemParameterChains[samplechain[sample], betaInterceptCols[covSample]]
-        betaLambdaSample =  itemParameterChains[samplechain[sample], betaLambdaCols[covSample]]
+        betaInterceptSamples =  itemParameterChains[samplechain, betaInterceptCols[covSamples]]
+        betaLambdaSamples =  itemParameterChains[samplechain, betaLambdaCols[covSamples]]
+
+        simItemCovsI = itemcovs[itemSamples,]
+        simItemCovs = simItemCovsI[, which(apply(simItemCovsI, 2, sum)>0)]
+
       }
 
-    } else {
-      interceptSample =  itemParameterChains[samplechain[sample], interceptCols[1:originalItemsInPool]]
-      lambdaSample = itemParameterChains[samplechain[sample], lambdaCols[1:originalItemsInPool]]
-      betaInterceptSample = itemParameterChains[samplechain[sample], betaInterceptCols[1:originalCovariatesInPool]]
-      betaLambdaSample = itemParameterChains[samplechain[sample], betaLambdaCols[1:originalCovariatesInPool]]
-    }
-
-    interceptSamples = c(interceptSamples,interceptSample)
-    lambdaSamples = c(lambdaSamples, lambdaSample)
-    betaInterceptSamples = c(betaInterceptSamples, betaInterceptSample)
-    betaLambdaSamples = c(betaLambdaSamples, betaLambdaSample)
-
-  }
+    # attach new item name
+    rownames(simItemCovs) = paste0("item", 1:nrow(simItemCovs))
+    colnames(simItemCovs) = paste0("cov", 1:ncol(simItemCovs))
 
 
-  # generate random profiles from categorical distribution
+
+  # generate random profiles from categorical distribution for respondents =================
+  nAttributes = ncol(abilityQ)
+  nProfiles = 2^nAttributes
+
   profiles = rcat(nObs, rep(1/nProfiles, nProfiles))
 
   profileMatrix = NULL
@@ -77,33 +69,45 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains){
     )
   }
 
+  # change profiles to attribute profiles (alpha_c)
   attributeProfiles = matrix(NA, nrow = nObs, ncol = nAttributes)
   for(obs in 1:nObs){
     attributeProfiles[obs,1:nAttributes] = profileMatrix[profiles[obs], 1:nAttributes]
   }
+  colnames(attributeProfiles) = colnames(abilityQ)
 
 
+  # generate responses ======================================================================
   Xic = NULL
+  simAbilityQ = NULL
   for (i in 1:nItems){
     # get the item number
     itemN = as.numeric(gsub('\\D', '', x = names(lambdaSamples[i])))
 
-    # find the ability profile for the item
-    itemQ = abilityQre[itemN,]
+    # find the set of Q matrix entries for item i (q_i)
+    itemQ = abilityQ[itemN,]
 
+    # logit = intercept_i,0 + lambda_i * h(alpha_c, q_i) p.155
     logit = interceptSamples[i]+lambdaSamples[i]*attributeProfiles%*%itemQ
     prob = exp(logit)/(1+exp(logit))
 
     Xc = rbinom(nObs, 1, prob = prob)
     Xic = cbind(Xic, Xc)
+
+    simAbilityQ = rbind(simAbilityQ, abilityQ[itemN,])
+
+
   }
 
-  colnames(Xic) = paste0("item",  as.numeric(gsub('\\D', '', x = names(lambdaSamples))))
-
+  # attach new item number
+  colnames(Xic) = rownames(simItemCovs)
+  rownames(simAbilityQ) = rownames(simItemCovs)
 
 
  return(list(
         simData = Xic,
+        simItemCovs = simItemCovs,
+        simAbilityQ = simAbilityQ,
         intercept = interceptSamples,
         lambda = lambdaSamples,
         betaIntercept = betaInterceptSamples,
@@ -113,27 +117,4 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains){
 
 
 }
-
-# loop for calibration --starts with pilot sample ==============================
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
