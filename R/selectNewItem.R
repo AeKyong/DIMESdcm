@@ -1,5 +1,5 @@
 selectNewItem = function(
-    itemPool, itemProbArray, currentProfileProbablity, profileMatrix, itemAbilityQ, nProfiles
+    itemPool, itemProbArray, currentProfileProbablity, profileMatrix, itemAbilityQ, nProfiles, itemUpdateFunction, calculateSHE
 ){
 
   # calculate SHE for each item remaining in pool
@@ -8,10 +8,10 @@ selectNewItem = function(
     itemProbArray = itemProbArray,
     currentProfileProbablity = currentProfileProbablity,
     profileMatrix = profileMatrix,
-    itemAbilityQ = itemAbilityQ,
-    nProfiles = nProfiles
+    nProfiles = nProfiles,
+    itemUpdateFunction = itemUpdateFunction
   )
 
-  newItem = itemPool[which.min(poolSHE)]
+  newItem = which.min(poolSHE)
   return(newItem)
 }

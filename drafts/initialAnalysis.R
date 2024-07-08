@@ -17,7 +17,7 @@ seed = as.integer(Sys.time())
 ##                     Generate Q-Matrices                     ##
 #################################################################
 
-itemFile = read_xlsx(path = "FINAL_FOR_ANALYSIS_DIMES_DEIDENTIFIED_CONSENTED_Data_Scored_6.30.22.xlsx", sheet = "Items")
+itemFile = read_xlsx(path = "drafts/FINAL_FOR_ANALYSIS_DIMES_DEIDENTIFIED_CONSENTED_Data_Scored_6.30.22.xlsx", sheet = "Items")
 
 # remove tibble as we cannot use which() for selecting cases
 itemFile = as.data.frame(itemFile)
@@ -26,7 +26,7 @@ itemFile = as.data.frame(itemFile)
 # check to see if items have more than one entry
 # any(table(itemFile[,1]) >1) none do
 
-dataFile = read.csv(file = "formTot_notduplic.csv")
+dataFile = read.csv(file = "drafts/formTot_notduplic.csv")
 itemStartCol = 16 # items start at column 16
 itemStopCol = 120
 
@@ -337,8 +337,18 @@ edcm_full_run = jags.parallel(
   jags.seed = seed
 )
 
+# check max rhat
+maxRhat = max(edcm_full_run$BUGSoutput$summary[,"Rhat"])
 
 # item parameter chains
 itemParameterChains = edcm_full_run[["BUGSoutput"]][["sims.matrix"]]
 
+# item intercept variance, item lambda variance
+summary = as.data.frame(edcm_full_run$BUGSoutput$summary)
+itemParameterVariance = as.matrix(summary[c("var_intercept","var_lambda"),"mean"])
+colnames(itemParameterVariance) = "variance"
+rownames(itemParameterVariance) = c("intercept","lambda")
+
+
 save(itemParameterChains, file = "itemParameterChains.rda", row.names = F)
+save(itemParameterVariance, file = "itemParameterVariance.rda", row.names = F)

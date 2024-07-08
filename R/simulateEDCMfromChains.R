@@ -1,11 +1,11 @@
 
-simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, abilityQ){
+simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, abilityQ,
+                                  itemParameterVariance){
 
   # get location of beta intercept and beta lambda parameters
   betaInterceptCols = grep(pattern = "^beta_intercept\\[", x = colnames(itemParameterChains))
   betaLambdaCols = grep(pattern = "^beta_lambda\\[", x = colnames(itemParameterChains))
-  interceptCols = grep(pattern = "^intercept\\[", x = colnames(itemParameterChains))
-  lambdaCols = grep(pattern = "^lambda\\[", x = colnames(itemParameterChains))
+
 
   # original item pool size
   originalItemsInPool = length(grep(pattern = "^lambda\\[", x = colnames(itemParameterChains)))
@@ -13,49 +13,49 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
 
 
   # sample random number from the chain
-  samplechain = NULL
-  for (nTimes in 1:ceiling(nItems/originalItemsInPool)) {
-    samplechain = c(samplechain, sample(x = 1:nrow(itemParameterChains), size = 1, replace = TRUE))
-  }
+  samplechain = sample(x = 1:nrow(itemParameterChains), size = 1, replace = TRUE)
 
-  # sample item parameters
-      # when sampled items N == original items N
-      if (nItems %% originalItemsInPool == 0) {
-        interceptSamples =  itemParameterChains[samplechain, interceptCols[1:originalItemsInPool]]
-        lambdaSamples = itemParameterChains[samplechain, lambdaCols[1:originalItemsInPool]]
-        betaInterceptSamples = itemParameterChains[samplechain, betaInterceptCols[1:originalCovariatesInPool]]
-        betaLambdaSamples = itemParameterChains[samplechain, betaLambdaCols[1:originalCovariatesInPool]]
-        simItemCovs = itemcovs
 
-      # when sampled items N != original items N
-      }else{
-        itemSamples = sample(x = 1:originalItemsInPool, size = nItems %% originalItemsInPool, replace = FALSE)
-        interceptSamples =  itemParameterChains[samplechain, interceptCols[itemSamples]]
-        lambdaSamples =  itemParameterChains[samplechain, lambdaCols[itemSamples]]
+  betaInterceptSamples = NULL
+  betaLambdaSamples = NULL
+  simItemCovs = NULL
+  sampledItems = NULL
 
-        # create a matrix marking the sampled items
-        itemMat = matrix(0, nrow=1, ncol=originalItemsInPool)
-        itemMat[,itemSamples] = 1
-        # create a matrix marking the items properties associated with sampled items
-        covMat = itemMat %*% itemcovs
-        # draw the sampled item properties
-        covSamples = which(covMat>0)
+  # sample item parameters ======================================================
+    sampledItems = sample(x = 1:originalItemsInPool, size = nItems, replace = TRUE)
 
-        betaInterceptSamples =  itemParameterChains[samplechain, betaInterceptCols[covSamples]]
-        betaLambdaSamples =  itemParameterChains[samplechain, betaLambdaCols[covSamples]]
+    # create a matrix marking the sampled items
+    itemMat = matrix(0, nrow=1, ncol=originalItemsInPool)
+    itemMat[,sampledItems] = 1
 
-        simItemCovsI = itemcovs[itemSamples,]
-        simItemCovs = simItemCovsI[, which(apply(simItemCovsI, 2, sum)>0)]
+    # create a matrix marking the items covariates associated with sampled items
+    covMat = itemMat %*% itemcovs
+    # draw the sampled item covariates
+    covSamples = which(covMat>0)
 
-      }
+    betaInterceptSamples =  itemParameterChains[samplechain, betaInterceptCols[covSamples]]
+    betaLambdaSamples =  itemParameterChains[samplechain, betaLambdaCols[covSamples]]
+
+    simItemCovsMat = itemcovs[sampledItems,]
+    simItemCovs = simItemCovsMat[, which(apply(simItemCovsMat, 2, sum)>0)]
+
+
+    # attach new item name on item and covariate parameters
+    names(betaInterceptSamples) = paste0("beta_intercept[",1:length(betaInterceptSamples),"]")
+    names(betaLambdaSamples) = paste0("beta_lambda[",1:length(betaLambdaSamples),"]")
 
     # attach new item name
+    originalCovName = colnames(simItemCovs)
     rownames(simItemCovs) = paste0("item", 1:nrow(simItemCovs))
     colnames(simItemCovs) = paste0("cov", 1:ncol(simItemCovs))
 
+    # sampled item's abilityQ[item, AbilityQ]
+    simAbilityQ = abilityQ[sampledItems,]
+    rownames(simAbilityQ) = paste0("item", 1:nrow(simAbilityQ))
 
 
-  # generate random profiles from categorical distribution for respondents =================
+
+  # generate respondents' profiles  =============================================
   nAttributes = ncol(abilityQ)
   nProfiles = 2^nAttributes
 
@@ -70,51 +70,58 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
   }
 
   # change profiles to attribute profiles (alpha_c)
-  attributeProfiles = matrix(NA, nrow = nObs, ncol = nAttributes)
+  examineeProfile = matrix(NA, nrow = nObs, ncol = nAttributes)
   for(obs in 1:nObs){
-    attributeProfiles[obs,1:nAttributes] = profileMatrix[profiles[obs], 1:nAttributes]
+    examineeProfile[obs,1:nAttributes] = profileMatrix[profiles[obs], 1:nAttributes]
   }
-  colnames(attributeProfiles) = colnames(abilityQ)
+  colnames(examineeProfile) = colnames(abilityQ)
+
 
 
   # generate responses ======================================================================
   Xic = NULL
-  simAbilityQ = NULL
   for (i in 1:nItems){
-    # get the item number
-    itemN = as.numeric(gsub('\\D', '', x = names(lambdaSamples[i])))
 
     # find the set of Q matrix entries for item i (q_i)
-    itemQ = abilityQ[itemN,]
+    itemQ = simAbilityQ[i, ]
 
-    # logit = intercept_i,0 + lambda_i * h(alpha_c, q_i) p.155
-    logit = interceptSamples[i]+lambdaSamples[i]*attributeProfiles%*%itemQ
+    # find the set of item covariates' location
+    itemCovariatesNum = which(simItemCovs[i, ]==1)
+
+    # sample an error for the item
+    interceptError = rnorm(1, mean = 0, sd = sqrt(itemParameterVariance["intercept",]))
+    lambdaError = rnorm(1, mean = 0, sd = sqrt(itemParameterVariance["lambda",]))
+
+    # attach random error to the item parameter
+    trueIntercept = sum(betaInterceptSamples[itemCovariatesNum]) + interceptError
+    trueLambda = sum(betaLambdaSamples[itemCovariatesNum]) + lambdaError
+
+    # logit = intercept_i + lambda_i * h(alpha_c, q_i) p.155
+    logit = trueIntercept + trueLambda*examineeProfile%*%itemQ
     prob = exp(logit)/(1+exp(logit))
 
     Xc = rbinom(nObs, 1, prob = prob)
     Xic = cbind(Xic, Xc)
 
-    simAbilityQ = rbind(simAbilityQ, abilityQ[itemN,])
-
-
   }
 
-  # attach new item number
+  # attach new item number on response
   colnames(Xic) = rownames(simItemCovs)
-  rownames(simAbilityQ) = rownames(simItemCovs)
+
 
 
  return(list(
         simData = Xic,
         simItemCovs = simItemCovs,
         simAbilityQ = simAbilityQ,
-        intercept = interceptSamples,
-        lambda = lambdaSamples,
         betaIntercept = betaInterceptSamples,
         betaLambda = betaLambdaSamples,
-        attributeProfiles = attributeProfiles
+        interceptVariance = itemParameterVariance["intercept",],
+        lambdaVariance = itemParameterVariance["lambda",],
+        originalCovName = originalCovName
         ))
 
 
 }
+
 
