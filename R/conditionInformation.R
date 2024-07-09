@@ -4,7 +4,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
 
   # create conditions list
   conditions = list(
-    nItemsInPool = c(30, 105),
+    nItemsInPool = c(35, 105),
     initialPilotSampleSize = c(30, 300, 2000),
     nNewStudents = c(30),
     itemUpdateFunction = c(
@@ -93,9 +93,9 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
 
 
   # maxItem
-  if (nItemsInPool == 30){
+  if (nItemsInPool < 105){
     maxItems = 30
-  } else if (nItemsInPool == 105) {
+  } else if (nItemsInPool >= 105) {
     maxItems = 50
   }
 
