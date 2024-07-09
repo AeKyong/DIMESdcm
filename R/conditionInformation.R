@@ -23,7 +23,8 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   )
 
 
-  stopSampleSize = 1200 # sample size needed to stop simulation
+  stopSampleSize = 1200
+
 
   # number of conditions
   nConditions = prod(unlist(lapply(X = conditions, FUN = length)))
