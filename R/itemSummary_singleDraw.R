@@ -6,7 +6,7 @@ itemSummary_singleDraw = function(itemProbArray, itemName, nItemSamples){
 
   for (profile in 1:nProfiles){
     for (response in 0:1){
-      currentItemProbArray[1, profile, (response+1)] = itemProbArrayNew[itemSample, profile, (response+1), itemName, drop=FALSE]
+      currentItemProbArray[1, profile, (response+1)] = itemProbArray[itemSample, profile, (response+1), itemName, drop=FALSE]
     }
   }
 
