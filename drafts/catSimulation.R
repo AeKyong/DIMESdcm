@@ -243,7 +243,7 @@ print(calibration)
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
-                                       betaInterceptMean = 0,
+                                       betaInterceptMean = 3,
                                        betaInterceptSD = .1,
                                        betaLambdaMean = 3,
                                        betaLambdaSD = .1,
@@ -300,17 +300,17 @@ print(calibration)
     if (is.null(simItemParameterChainsCnvg)){
 
       # if no parameter has converged yet, generate beta_intercept, beta_lambda from uniform distribution
-      simItemParameterChains[, betaInterceptBadCols] = runif(8000*length(betaInterceptBad), min = -0.5, max = 1.0)
-      simItemParameterChains[, betaLambdaBadCols] = runif(8000*length(betaLambdaBad), min = 0, max = 1.0)
+      simItemParameterChains[, betaInterceptCols] = runif(8000*length(betaInterceptCols), min = -0.5, max = 1.0)
+      simItemParameterChains[, betaLambdaCols] = runif(8000*length(betaLambdaCols), min = 0, max = 1.0)
 
-      for (i in 1:length(interceptBad)){
-        interceptCov = betaInterceptCols[which(simDataList$simItemCovs[interceptBad[i],]==1)]
-        simItemParameterChains[, interceptBadCols[i]] = apply(simItemParameterChains[,interceptCov], 1, sum)+
+      for (i in 1:length(interceptCols)){
+        interceptCov = betaInterceptCols[which(simDataList$simItemCovs[i,]==1)]
+        simItemParameterChains[, interceptCols[i]] = apply(simItemParameterChains[,interceptCov], 1, sum)+
           rnorm(n=nrow(simItemParameterChains), mean = 0, sd = 1)
       }
-      for (i in 1:length(lambdaBad)){
-       lambdaCov = betaLambdaCols[which(simDataList$simItemCovs[lambdaBad[i],]==1)]
-       simItemParameterChains[, lambdaBadCols[i]] = apply(simItemParameterChains[,lambdaCov], 1, sum)+
+      for (i in 1:length(lambdaCols)){
+       lambdaCov = betaLambdaCols[which(simDataList$simItemCovs[i,]==1)]
+       simItemParameterChains[, lambdaCols[i]] = apply(simItemParameterChains[,lambdaCov], 1, sum)+
         rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3)
       }
 
