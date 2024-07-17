@@ -1,6 +1,6 @@
 parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters, calibration,
                                       nProfiles,abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity,itemPool,maxItems,
-                                      trueParameters, trueProfiles,itemProbArray,
+                                      trueParameters, trueProfiles,itemProbArray, itemParameterVariance,
                                       itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 
@@ -25,6 +25,7 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
                                   trueParameters = trueParameters,
                                   trueProfiles = trueProfiles[threadIDs[[thread]][student]],
                                   itemProbArray= itemProbArray,
+                                  itemParameterVariance = itemParameterVariance,
                                   itemUpdateFunction = simulationSpecs$itemUpdateFunction,
                                   itemSummaryFunction = simulationSpecs$itemSummaryFunction,
                                   nItemSamples = simulationSpecs$nItemSamples,

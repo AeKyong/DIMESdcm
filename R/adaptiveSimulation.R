@@ -1,5 +1,5 @@
 adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity, itemPool,
-                              trueParameters, trueProfiles, itemProbArray,
+                              trueParameters, trueProfiles, itemProbArray,itemParameterVariance,
                               maxItems, itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 
@@ -9,7 +9,6 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
 
   itemAdministered = NULL
 
-  # currentItemProbArray = array(data = NA, dim = c(1, nProfiles, 2))
 
   poolQ = abilityQ
   rownames(poolQ) = paste0("[", gsub("\\D", "", rownames(abilityQ)), "]")
