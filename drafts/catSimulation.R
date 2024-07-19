@@ -13,7 +13,7 @@ library(extraDistr)
 
 # grab command line arguments
 #arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
-arrayNumber = 3
+arrayNumber = 1
 
 set.seed(arrayNumber)
 
@@ -208,7 +208,7 @@ itemcovs = model.matrix(
 
 # load item parameter data
 data("itemParameterChains")
-data("itemParameterVariance")
+# data("itemParameterVariance")
 
 # implement condition values in simulation
 simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 1, nCores = 4)
@@ -243,7 +243,7 @@ print(calibration)
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
-                                       betaInterceptMean = 0,
+                                       betaInterceptMean = 3,
                                        betaInterceptSD = .1,
                                        betaLambdaMean = 3,
                                        betaLambdaSD = .1,
@@ -256,18 +256,21 @@ print(calibration)
   # parameter Estimates df
   summary = as.data.frame(jagsEDCMestimates$BUGSoutput$summary)
   parameterEstimates = tibble::rownames_to_column(summary, "variable")
+  # rm(summary)
 
   # simulated item parameter chains matrix
-  variables = c("^beta_intercept\\[","^beta_lambda\\[","^intercept\\[","^lambda\\[")
+  variables = c("^beta_intercept\\[","^beta_lambda\\[","^intercept\\[","^lambda\\[", "var_intercept", "var_lambda")
   sims.matrix = jagsEDCMestimates$BUGSoutput$sims.matrix
   simItemParameterChains = sims.matrix[,grep(pattern =paste(variables, collapse ="|"), x = colnames(sims.matrix)) ]
-
-
+  # rm(sims.matrix)
 
   betaInterceptCols = grep("^beta_intercept", colnames(simItemParameterChains))
   betaLambdaCols = grep("^beta_lambda", colnames(simItemParameterChains))
   interceptCols = grep("^intercept", colnames(simItemParameterChains))
   lambdaCols = grep("^lambda", colnames(simItemParameterChains))
+  varInterceptCols = grep("^var_intercept", colnames(simItemParameterChains))
+  varLambdaCols = grep("^var_lambda", colnames(simItemParameterChains))
+
 
 
   # if items have not converged, replace non-converged parameters with previously converged ones
@@ -280,19 +283,26 @@ print(calibration)
     betaLambdaBad = as.numeric(gsub('\\D', '', badParams[grep("^beta_lambda", badParams)]))
     interceptBad = as.numeric(gsub('\\D', '', badParams[grep("^intercept", badParams)]))
     lambdaBad = as.numeric(gsub('\\D', '', badParams[grep("^lambda", badParams)]))
+    varInterceptBad = length(badParams[grep("^var_intercept", badParams)])
+    varLambdaBad = length(badParams[grep("^var_lambda", badParams)])
+
 
     # grab item/covariate column numbers having bad parameters from simItemParameterChains
     betaInterceptBadCols = betaInterceptCols[betaInterceptBad]
     betaLambdaBadCols = betaLambdaCols[betaLambdaBad]
     interceptBadCols = interceptCols[interceptBad]
     lambdaBadCols = lambdaCols[lambdaBad]
+    varInterceptBadCols = varInterceptCols[varInterceptBad]
+    varLambdaBadCols = varLambdaCols[varLambdaBad]
 
     # if bad parameters do not contain main variables, assign main's original columns to bad columns
-    if (length(grep(pattern =paste(variables, collapse ="|"), x = badParams)) == 0) {
+    if (length(grep(pattern = paste(variables, collapse ="|"), x = badParams)) == 0) {
         betaInterceptBadCols = betaInterceptCols
         betaLambdaBadCols = betaLambdaCols
         interceptBadCols = interceptCols
         lambdaBadCols = lambdaCols
+        varInterceptBadCols = varInterceptCols
+        varLambdaBadCols = varLambdaCols
     }
 
 
@@ -311,8 +321,11 @@ print(calibration)
       for (i in 1:length(lambdaCols)){
        lambdaCov = betaLambdaCols[which(simDataList$simItemCovs[i,]==1)]
        simItemParameterChains[, lambdaCols[i]] = apply(simItemParameterChains[,lambdaCov], 1, sum)+
-        rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3)
+        rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3) # might need to change to normal distribution
       }
+
+      simItemParameterChains[, varInterceptCols] = runif(8000*length(varInterceptCols), min = 0, max = 1.0)
+      simItemParameterChains[, varLambdaCols] = runif(8000*length(varLambdaCols), min = 0, max = 1.0)
 
     }else{
 
@@ -321,6 +334,10 @@ print(calibration)
       simItemParameterChains[, betaLambdaBadCols] = simItemParameterChainsCnvg[, betaLambdaBadCols]
       simItemParameterChains[, interceptBadCols] = simItemParameterChainsCnvg[, interceptBadCols]
       simItemParameterChains[, lambdaBadCols] = simItemParameterChainsCnvg[, lambdaBadCols]
+      simItemParameterChains[, varInterceptBadCols] = simItemParameterChainsCnvg[, varInterceptBadCols]
+      simItemParameterChains[, varLambdaBadCols] = simItemParameterChainsCnvg[, varLambdaBadCols]
+
+
     }
 
 
@@ -330,7 +347,10 @@ print(calibration)
 
 
 
-  trueParameters = list(beta_intercept = simDataList$betaIntercept, beta_lambda = simDataList$betaLambda
+  trueParameters = list(beta_intercept = simDataList$betaIntercept,
+                        beta_lambda = simDataList$betaLambda,
+                        var_intercept = simDataList$varIntercept,
+                        var_lambda = simDataList$varLambda
                       )
   calibrationData[[calibration]] = list()
   calibrationData[[calibration]]$maxRhat = maxRhat
@@ -348,7 +368,8 @@ print(calibration)
   itemQuantiles$eap = apply(X = simItemParameterChains, MARGIN = 2, FUN = mean)
   itemQuantiles$sd = apply(X = simItemParameterChains, MARGIN = 2, FUN = sd)
   itemQuantiles$calibration = calibration
-  itemQuantiles$trueValues = c(trueParameters$beta_intercept, trueParameters$beta_lambda, rep(0, 2*nrow(itemcovs)))
+  itemQuantiles$trueValues = c(trueParameters$beta_intercept, trueParameters$beta_lambda, rep(0, 2*nrow(itemcovs)),
+                               trueParameters$var_intercept, trueParameters$var_lambda)
 
 
 
@@ -394,16 +415,14 @@ print(calibration)
   # set an initial value of theta -- used for selecting items ==================
   currentProfileProbablity = rep(1/nProfiles, nProfiles)
 
-  # adaptive algorithm for all new students and all items
-  profileDetails = NULL
+  # # adaptive algorithm for all new students and all items
+  # profileDetails = NULL
 
 
   # calculate item probabilities
   nSamples = nrow(interceptPosterior)
   itemProbArray = array(data = NA, dim = c(nSamples, nProfiles, 2, nItems), dimnames = list(c(paste0("draw", 1:nSamples)), c(paste0("profile", 1:nProfiles)),
                                                                                             c(paste0("resp", 0:1)),c(paste0("[", 1:nItems, "]"))))
-
-
   # create item response probability array for each item, class, and response
   for (item in 1:nItems){
     for(sample in 1:nSamples) {
@@ -435,12 +454,11 @@ print(calibration)
   #                               itemPool = itemPool,
   #                               trueParameters = trueParameters,
   #                               trueProfiles = trueProfiles[i],
+  #                               itemQuantiles = itemQuantiles,
   #                               itemProbArray= itemProbArray,
-  #                               itemParameterVariance = itemParameterVariance,
   #                               maxItems = simulationSpecs$maxItems,
   #                               itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-  #                               # itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-  #                               itemSummaryFunction = itemSummary_multipleDraws,
+  #                               itemSummaryFunction = simulationSpecs$itemSummaryFunction,
   #                               nItemSamples = simulationSpecs$nItemSamples,
   #                               stopCriterion = simulationSpecs$stopCriterion,
   #                               calculateSHE = simulationSpecs$calculateSHE)
@@ -459,7 +477,7 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemParameterVariance = itemParameterVariance,
+   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -479,7 +497,7 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemParameterVariance = itemParameterVariance,
+   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -499,7 +517,7 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemParameterVariance = itemParameterVariance,
+   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -519,7 +537,7 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemParameterVariance = itemParameterVariance,
+   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -544,7 +562,7 @@ print(calibration)
                  "simDataList",
                  "simulationSpecs",
                  "selectNewItem",
-                 "itemParameterVariance",
+                 "itemQuantiles",
                  "nProfiles"),
      envir = environment()
    )
@@ -568,7 +586,7 @@ print(calibration)
      trueParameters = trueParameters,
      trueProfiles = trueProfiles,
      itemProbArray= itemProbArray,
-     itemParameterVariance = itemParameterVariance,
+     itemQuantiles = itemQuantiles,
      itemUpdateFunction = simulationSpecs$itemUpdateFunction,
      itemSummaryFunction = simulationSpecs$itemSummaryFunction,
      stopCriterion = simulationSpecs$stopCriterion,
@@ -609,7 +627,6 @@ save(estimatedParameters, estimatedProfileProbability, runningData, calibrationD
 
 
 #[NEXT] coding summary of the results
-# Q: var~gamma vs. var~invGamma why same as 0.6, 0.5?
 
 
 

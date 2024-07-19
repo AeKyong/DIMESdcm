@@ -1,5 +1,5 @@
 adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity, itemPool,
-                              trueParameters, trueProfiles, itemQuantiles, itemProbArray,
+                              trueParameters, trueProfiles, itemProbArray, itemQuantiles,
                               maxItems, itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 

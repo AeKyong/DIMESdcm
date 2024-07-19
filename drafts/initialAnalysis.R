@@ -349,12 +349,5 @@ maxRhat = max(edcm_full_run$BUGSoutput$summary[,"Rhat"])
 # item parameter chains
 itemParameterChains = edcm_full_run[["BUGSoutput"]][["sims.matrix"]]
 
-# # item intercept variance, item lambda variance
-# summary = as.data.frame(edcm_full_run$BUGSoutput$summary)
-# itemParameterVariance = as.matrix(summary[c("var_intercept","var_lambda"),"mean"])
-# colnames(itemParameterVariance) = "variance"
-# rownames(itemParameterVariance) = c("intercept","lambda")
-
-
 save(itemParameterChains, file = "itemParameterChains.rda", row.names = F)
-# save(itemParameterVariance, file = "itemParameterVariance.rda", row.names = F)
+

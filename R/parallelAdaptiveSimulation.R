@@ -1,6 +1,6 @@
 parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters, calibration,
                                       nProfiles,abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity,itemPool,maxItems,
-                                      trueParameters, trueProfiles,itemProbArray,itemQuantiles,
+                                      trueParameters, trueProfiles, itemProbArray, itemQuantiles,
                                       itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 
