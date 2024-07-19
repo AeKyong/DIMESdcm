@@ -5,7 +5,8 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
   # get location of beta intercept and beta lambda parameters
   betaInterceptCols = grep(pattern = "^beta_intercept\\[", x = colnames(itemParameterChains))
   betaLambdaCols = grep(pattern = "^beta_lambda\\[", x = colnames(itemParameterChains))
-
+  varInterceptCols =  grep(pattern = "^var_intercept", x = colnames(itemParameterChains))
+  varLambdaCols =  grep(pattern = "^var_lambda", x = colnames(itemParameterChains))
 
   # original item pool size
   originalItemsInPool = length(grep(pattern = "^lambda\\[", x = colnames(itemParameterChains)))
@@ -13,7 +14,7 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
 
 
   # sample random number from the chain
-  samplechain = sample(x = 1:nrow(itemParameterChains), size = 1, replace = TRUE)
+  samplechain = sample(x = 1:nrow(itemParameterChains), size = 1, replace = FALSE)
 
 
   betaInterceptSamples = NULL
@@ -22,7 +23,7 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
   sampledItems = NULL
 
   # sample item parameters ======================================================
-    sampledItems = sample(x = 1:originalItemsInPool, size = nItems, replace = TRUE)
+    sampledItems = sample(x = 1:originalItemsInPool, size = nItems, replace = FALSE)
 
     # create a matrix marking the sampled items
     itemMat = matrix(0, nrow=1, ncol=originalItemsInPool)
@@ -52,6 +53,10 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
     # sampled item's abilityQ[item, AbilityQ]
     simAbilityQ = abilityQ[sampledItems,]
     rownames(simAbilityQ) = paste0("item", 1:nrow(simAbilityQ))
+
+    # sample variance===========================================================
+    varIntercept = itemParameterChains[samplechain, varInterceptCols]
+    varLambda = itemParameterChains[samplechain, varLambdaCols]
 
 
 
@@ -89,8 +94,8 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
     itemCovariatesNum = which(simItemCovs[i, ]==1)
 
     # sample an error for the item
-    interceptError = rnorm(1, mean = 0, sd = sqrt(itemParameterVariance["intercept",]))
-    lambdaError = rnorm(1, mean = 0, sd = sqrt(itemParameterVariance["lambda",]))
+    interceptError = rnorm(1, mean = 0, sd = sqrt(varIntercept))
+    lambdaError = rnorm(1, mean = 0, sd = sqrt(varLambda))
 
     # attach random error to the item parameter
     trueIntercept = sum(betaInterceptSamples[itemCovariatesNum]) + interceptError
@@ -116,8 +121,8 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
         simAbilityQ = simAbilityQ,
         betaIntercept = betaInterceptSamples,
         betaLambda = betaLambdaSamples,
-        interceptVariance = itemParameterVariance["intercept",],
-        lambdaVariance = itemParameterVariance["lambda",],
+        varIntercept =varIntercept,
+        varLambda = varLambda,
         originalCovName = originalCovName
         ))
 

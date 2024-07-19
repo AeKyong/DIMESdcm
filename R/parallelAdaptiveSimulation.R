@@ -1,6 +1,6 @@
 parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters, calibration,
                                       nProfiles,abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity,itemPool,maxItems,
-                                      trueParameters, trueProfiles,itemProbArray, itemParameterVariance,
+                                      trueParameters, trueProfiles,itemProbArray,itemQuantiles,
                                       itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 
@@ -24,8 +24,8 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
                                   maxItems = simulationSpecs$maxItems,
                                   trueParameters = trueParameters,
                                   trueProfiles = trueProfiles[threadIDs[[thread]][student]],
-                                  itemProbArray= itemProbArray,
-                                  itemParameterVariance = itemParameterVariance,
+                                  itemProbArray = itemProbArray,
+                                  itemQuantiles = itemQuantiles,
                                   itemUpdateFunction = simulationSpecs$itemUpdateFunction,
                                   itemSummaryFunction = simulationSpecs$itemSummaryFunction,
                                   nItemSamples = simulationSpecs$nItemSamples,
@@ -52,9 +52,9 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
     colnames(profileProbabilityTemp) = paste0("profile", 1:length(testDraw$currentProfileProbablity))
 
     profileProbabilityTemp$profile = testDraw$currentProfile
-    profileProbabilityTemp$stduent = threadIDs[[thread]][student]
+    profileProbabilityTemp$student = threadIDs[[thread]][student]
     profileProbabilityTemp$calibration = calibration
-    profileProbabilityTemp$trueProfiles = trueProfiles[threadIDs[[thread]][student]]
+    profileProbabilityTemp$trueProfile = trueProfiles[threadIDs[[thread]][student]]
 
     estimatedProfileProbability = rbind(estimatedProfileProbability, profileProbabilityTemp)
 

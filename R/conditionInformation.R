@@ -4,7 +4,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
 
   # create conditions list
   conditions = list(
-    nItemsInPool = c(35, 105),
+    nItemsInPool = c(40, 105),
     initialPilotSampleSize = c(30, 300, 2000),
     nNewStudents = c(30),
     itemUpdateFunction = c(

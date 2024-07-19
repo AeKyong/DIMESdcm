@@ -243,7 +243,7 @@ print(calibration)
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
-                                       betaInterceptMean = 3,
+                                       betaInterceptMean = 0,
                                        betaInterceptSD = .1,
                                        betaLambdaMean = 3,
                                        betaLambdaSD = .1,
