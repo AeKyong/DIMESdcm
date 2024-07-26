@@ -1,5 +1,5 @@
 adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity, itemPool,
-                              trueParameters, trueProfiles, itemProbArray, itemQuantiles,
+                              trueParameters, trueProfiles, itemProbArray,
                               maxItems, itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
 
 
@@ -44,28 +44,15 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
   selectedItemcovs = itemcovs[itemName,]
   selectedCovs = which(selectedItemcovs ==1)
 
-# browser()
-  # betaInterceptSum = sum(trueParameters$beta_intercept[which(names(trueParameters$beta_intercept) %in% paste0("beta_intercept[", selectedCovs,"]"))])
-  # betaLambdaSum = sum(trueParameters$beta_lambda[which(names(trueParameters$beta_lambda) %in% paste0("beta_lambda[", selectedCovs,"]"))])
-  #
-  # interceptError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
-  # lambdaError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
-  #
-  # trueIntercept = betaInterceptSum + interceptError
-  # trueLambda = betaLambdaSum + lambdaError
 
-  # trueParameters VS. itemQuantiles
+  betaInterceptSum = sum(trueParameters$beta_intercept[which(names(trueParameters$beta_intercept) %in% paste0("beta_intercept[", selectedCovs,"]"))])
+  betaLambdaSum = sum(trueParameters$beta_lambda[which(names(trueParameters$beta_lambda) %in% paste0("beta_lambda[", selectedCovs,"]"))])
 
-  betaInterceptSum = sum(itemQuantiles[which(rownames(itemQuantiles) %in% paste0("beta_intercept[", selectedCovs,"]")),"eap"])
-  betaLambdaSum = sum(itemQuantiles[which(rownames(itemQuantiles) %in% paste0("beta_lambda[", selectedCovs,"]")),"eap"])
-
-  interceptError = rnorm(1, mean =0, sd = sqrt(itemQuantiles["var_intercept","eap"])) # eap is fine?
-  lambdaError = rnorm(1, mean =0, sd = sqrt(itemQuantiles["var_lambda","eap"]))
+  interceptError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
+  lambdaError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
 
   trueIntercept = betaInterceptSum + interceptError
   trueLambda = betaLambdaSum + lambdaError
-
-
 
 
 

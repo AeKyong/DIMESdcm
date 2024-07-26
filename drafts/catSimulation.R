@@ -71,15 +71,15 @@ itemData = itemData[order(itemData$newItemName),]
 itemDataNoR2 = itemData[which(itemData$`Ev. Model Task Code` != "R2"),]
 
 # build Q-matrix for ability
-abilityQ = matrix(data = 0, nrow = nrow(itemDataNoR2), ncol = 3)
-colnames(abilityQ) = c("Recognition", "Comprehension", "ProblemSolving")
-rownames(abilityQ) = itemDataNoR2$newItemName
+abilityQpilot = matrix(data = 0, nrow = nrow(itemDataNoR2), ncol = 3)
+colnames(abilityQpilot) = c("Recognition", "Comprehension", "ProblemSolving")
+rownames(abilityQpilot) = itemDataNoR2$newItemName
 
 # populate ability Q-matrix
 itemTaskCode = substr(x = itemDataNoR2$`Ev. Model Task Code`, start = 1, stop = 1)
-qAbilities = substr(x = colnames(abilityQ), start = 1, stop = 1)
-for (ability in 1:ncol(abilityQ)){
-  abilityQ[which(qAbilities[ability] == itemTaskCode),ability] = 1
+qAbilities = substr(x = colnames(abilityQpilot), start = 1, stop = 1)
+for (ability in 1:ncol(abilityQpilot)){
+  abilityQpilot[which(qAbilities[ability] == itemTaskCode),ability] = 1
 }
 
 
@@ -88,20 +88,17 @@ for (ability in 1:ncol(abilityQ)){
 # note: should likely put back R2 items
 
 # build Q-matrix for ability
-abilityQ = matrix(data = 0, nrow = nrow(itemData), ncol = 3)
-colnames(abilityQ) = c("Recognition", "Comprehension", "ProblemSolving")
-rownames(abilityQ) = itemData$newItemName
+abilityQpilot = matrix(data = 0, nrow = nrow(itemData), ncol = 3)
+colnames(abilityQpilot) = c("Recognition", "Comprehension", "ProblemSolving")
+rownames(abilityQpilot) = itemData$newItemName
 
 # populate ability Q-matrix
 itemTaskCode = substr(x = itemData$`Ev. Model Task Code`, start = 1, stop = 1)
-qAbilities = substr(x = colnames(abilityQ), start = 1, stop = 1)
-for (ability in 1:ncol(abilityQ)){
-  abilityQ[which(qAbilities[ability] == itemTaskCode),ability] = 1
+qAbilities = substr(x = colnames(abilityQpilot), start = 1, stop = 1)
+for (ability in 1:ncol(abilityQpilot)){
+  abilityQpilot[which(qAbilities[ability] == itemTaskCode),ability] = 1
 }
 
-# # ability Q-matrix rename the items
-# abilityQre = abilityQ
-# rownames(abilityQre) = 1:nrow(abilityQ)
 
 
 # Ev. Model Task Code (column B; factor variable)
@@ -198,7 +195,7 @@ itemModelFormula = formula(x =
                            , data = itemModelData)
 
 
-itemcovs = model.matrix(
+itemcovsPilot = model.matrix(
   object = itemModelFormula,
   data = itemModelData)
 
@@ -208,7 +205,6 @@ itemcovs = model.matrix(
 
 # load item parameter data
 data("itemParameterChains")
-# data("itemParameterVariance")
 
 # implement condition values in simulation
 simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 1, nCores = 4)
@@ -218,9 +214,8 @@ simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPe
 simDataList = simulateEDCMfromChains(nObs = simulationSpecs$initialPilotSampleSize,
                                      nItems = simulationSpecs$nItemsInPool,
                                      itemParameterChains = itemParameterChains,
-                                     itemcovs=itemcovs,
-                                     abilityQ = abilityQ,
-                                     itemParameterVariance = itemParameterVariance)
+                                     itemcovs=itemcovsPilot,
+                                     abilityQ = abilityQpilot)
 
 
 # loop for calibration --starts with pilot sample ==============================
@@ -237,6 +232,7 @@ simItemParameterChains = NULL
 
 while (calibration <= simulationSpecs$nCalibrations ){
 print(calibration)
+
   # save previously converged parameters
   simItemParameterChainsCnvg = simItemParameterChains
 
@@ -321,7 +317,8 @@ print(calibration)
       for (i in 1:length(lambdaCols)){
        lambdaCov = betaLambdaCols[which(simDataList$simItemCovs[i,]==1)]
        simItemParameterChains[, lambdaCols[i]] = apply(simItemParameterChains[,lambdaCov], 1, sum)+
-        rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3) # might need to change to normal distribution
+         # rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3)
+         rnorm(n=nrow(simItemParameterChains), mean = 0, sd = 1)
       }
 
       simItemParameterChains[, varInterceptCols] = runif(8000*length(varInterceptCols), min = 0, max = 1.0)
@@ -454,7 +451,6 @@ print(calibration)
   #                               itemPool = itemPool,
   #                               trueParameters = trueParameters,
   #                               trueProfiles = trueProfiles[i],
-  #                               itemQuantiles = itemQuantiles,
   #                               itemProbArray= itemProbArray,
   #                               maxItems = simulationSpecs$maxItems,
   #                               itemUpdateFunction = simulationSpecs$itemUpdateFunction,
@@ -477,7 +473,6 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -497,7 +492,6 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -517,7 +511,6 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -537,7 +530,6 @@ print(calibration)
    #                                          trueParameters = trueParameters,
    #                                          trueProfiles = trueProfiles,
    #                                          itemProbArray= itemProbArray,
-   #                                          itemQuantiles = itemQuantiles,
    #                                          maxItems = simulationSpecs$maxItems,
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
@@ -562,7 +554,6 @@ print(calibration)
                  "simDataList",
                  "simulationSpecs",
                  "selectNewItem",
-                 "itemQuantiles",
                  "nProfiles"),
      envir = environment()
    )
@@ -586,7 +577,6 @@ print(calibration)
      trueParameters = trueParameters,
      trueProfiles = trueProfiles,
      itemProbArray= itemProbArray,
-     itemQuantiles = itemQuantiles,
      itemUpdateFunction = simulationSpecs$itemUpdateFunction,
      itemSummaryFunction = simulationSpecs$itemSummaryFunction,
      stopCriterion = simulationSpecs$stopCriterion,
@@ -613,7 +603,7 @@ print(calibration)
      result[[4]]$estimatedProfileProbability
    )
 
-
+print(maxRhat)
    calibration = calibration + 1
 
 }
@@ -625,8 +615,6 @@ save(estimatedParameters, estimatedProfileProbability, runningData, calibrationD
 
 
 
-
-#[NEXT] coding summary of the results
 
 
 

@@ -1,6 +1,5 @@
 
-simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, abilityQ,
-                                  itemParameterVariance){
+simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, abilityQ){
 
   # get location of beta intercept and beta lambda parameters
   betaInterceptCols = grep(pattern = "^beta_intercept\\[", x = colnames(itemParameterChains))

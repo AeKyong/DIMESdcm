@@ -289,13 +289,12 @@ edcm_full = function(){
     lambda[i] ~ dnorm(itemcov_lambda[i], inVar_lambda); T(0,)
   }
 
-  inVar_intercept ~ dgamma(1e-3,1e-3)
-  inVar_lambda ~ dgamma(1e-3,1e-3)
 
-  var_intercept <- 1/inVar_intercept
-  var_lambda <- 1/inVar_lambda
+  inVar_intercept <- 1/var_intercept
+  inVar_lambda <- 1/var_lambda
 
-
+  var_intercept ~ dunif(0,1)
+  var_lambda ~ dunif(0,1)
 
 
   for(covi in 1:nItemCovs){

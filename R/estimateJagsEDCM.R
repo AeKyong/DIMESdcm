@@ -61,7 +61,6 @@ estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
   jags.inits = function(){
     list("beta_intercept" = rnorm(ncol(itemcovs), mean = betaInterceptMean, sd = betaInterceptSD),
          "beta_lambda" = rnorm(ncol(itemcovs), mean = betaLambdaMean, sd = betaLambdaSD))
-         # "inVar_intercept" = 10, "inVar_lambda" = 10)
 
   }
 
@@ -78,18 +77,7 @@ estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
     jags.seed = seed
   )
 
-  # edcm_full_run = jags(
-  #   data = moddata,
-  #   parameters.to.save = edcm_params_full,
-  #   model.file = edcm_full,
-  #   n.chains = 4,
-  #   n.iter = 4000,
-  #   n.thin = 1,
-  #   n.burnin = 2000,
-  #   # n.cluster = 4,
-  #   inits = jags.inits,
-  #   jags.seed = seed
-  # )
+
 
   return(edcm_full_run)
 
