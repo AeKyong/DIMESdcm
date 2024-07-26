@@ -60,7 +60,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   # Non-standard evaluation itemUpdateFunction
   if (itemUpdateFunction == "Sample 1"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_singleDraw))
-    calculateSHE = eval(quote( calculateSHEsingle))
+    calculateSHE = eval(quote(calculateSHEsingle))
   } else if (itemUpdateFunction == "Sample 10"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_multipleDraws))
     calculateSHE = eval(quote(calculateSHEmultiple))
@@ -94,7 +94,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
 
   # maxItem
   if (nItemsInPool < 105){
-    maxItems = 30
+    maxItems = 40
   } else if (nItemsInPool >= 105) {
     maxItems = 50
   }

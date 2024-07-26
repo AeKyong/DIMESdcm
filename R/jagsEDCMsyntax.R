@@ -32,13 +32,6 @@ edcm_full = function(){
   # var_intercept <- 1/inVar_intercept
   # var_lambda <- 1/inVar_lambda
 
-  # # VAR ~ logNormal
-  # inVar_intercept <- 1/var_intercept
-  # inVar_lambda <- 1/var_lambda
-  #
-  # var_intercept ~ dlnorm(-0.5, 0.1)
-  # var_lambda ~ dlnorm(-0.5, 0.1)
-
   # # VAR ~ unif
   # inVar_intercept <- 1/var_intercept
   # inVar_lambda <- 1/var_lambda
@@ -46,6 +39,12 @@ edcm_full = function(){
   # var_intercept ~ dunif(0,1)
   # var_lambda ~ dunif(0,1)
 
+  # # VAR ~ logNormal
+  # inVar_intercept <- 1/var_intercept
+  # inVar_lambda <- 1/var_lambda
+  #
+  # var_intercept ~ dlnorm(-0.5, 0.1)
+  # var_lambda ~ dlnorm(-0.5, 0.1)
 
   # VAR ~ GAMMA
   inVar_intercept <- 1/var_intercept
@@ -54,8 +53,8 @@ edcm_full = function(){
   var_intercept <- sd_intercept^2
   var_lambda <- sd_lambda^2
 
-  sd_intercept ~ dgamma(2, 1e-1)
-  sd_lambda ~ dgamma(2, 1e-1)
+  sd_intercept ~ dgamma(.001, .001)
+  sd_lambda ~ dgamma(.001, .001)
 
 
 

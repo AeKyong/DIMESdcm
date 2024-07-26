@@ -49,7 +49,7 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
   betaLambdaSum = sum(trueParameters$beta_lambda[which(names(trueParameters$beta_lambda) %in% paste0("beta_lambda[", selectedCovs,"]"))])
 
   interceptError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
-  lambdaError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_intercept))
+  lambdaError = rnorm(1, mean =0, sd = sqrt(trueParameters$var_lambda))
 
   trueIntercept = betaInterceptSum + interceptError
   trueLambda = betaLambdaSum + lambdaError
