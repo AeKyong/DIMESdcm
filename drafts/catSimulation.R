@@ -236,6 +236,23 @@ print(calibration)
   # save previously converged parameters
   simItemParameterChainsCnvg = simItemParameterChains
 
+  # increase the variance of the prior distribution after each calibration (keeping mean=0.7 in Gamma distribution)
+  hyperParaAinit = 7
+  hyperParaBinit = 10
+
+  nStudents = nrow(runningData)
+   if(nStudents < 100) {
+     hyperParaA = hyperParaAinit
+     hyperParaB = hyperParaBinit
+   } else if (nStudents >= 100 & nStudents <1000) {
+     hyperParaA = hyperParaAinit*0.1^(1)
+     hyperParaB = hyperParaBinit*0.1^(1)
+   } else if (nStudents >=1000) {
+     hyperParaA = hyperParaAinit*0.1^(2)
+     hyperParaB = hyperParaBinit*0.1^(2)
+   }
+  variance = hyperParaA*(1/hyperParaB)^2
+
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
@@ -243,12 +260,14 @@ print(calibration)
                                        betaInterceptSD = .1,
                                        betaLambdaMean = 3,
                                        betaLambdaSD = .1,
+                                       hyperParaA = hyperParaA,
+                                       hyperParaB = hyperParaB,
                                        seed = .Random.seed[1])
 
 
   # max Rhat
   maxRhat = max(jagsEDCMestimates$BUGSoutput$summary[,"Rhat"])
-
+  print(maxRhat)
   # parameter Estimates df
   summary = as.data.frame(jagsEDCMestimates$BUGSoutput$summary)
   parameterEstimates = tibble::rownames_to_column(summary, "variable")
@@ -460,130 +479,130 @@ print(calibration)
   #                               calculateSHE = simulationSpecs$calculateSHE)
 
 
-   # result = NULL
-   # result[[1]] = parallelAdaptiveSimulation(thread = 1, threadIDs = simulationSpecs$threadIDs,
-   #                                          tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
-   #                                          nProfiles = nProfiles,
-   #                                          abilityQ = simDataList$simAbilityQ,
-   #                                          itemcovs = simDataList$simItemCovs,
-   #                                          nItems = nItems,
-   #                                          profileMatrix= profileMatrix,
-   #                                          startingProfileProbablity = currentProfileProbablity,
-   #                                          itemPool = itemPool,
-   #                                          trueParameters = trueParameters,
-   #                                          trueProfiles = trueProfiles,
-   #                                          itemProbArray= itemProbArray,
-   #                                          maxItems = simulationSpecs$maxItems,
-   #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-   #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-   #                                          nItemSamples = simulationSpecs$nItemSamples,
-   #                                          stopCriterion = simulationSpecs$stopCriterion,
-   #                                          calculateSHE = simulationSpecs$calculateSHE)
+   result = NULL
+   result[[1]] = parallelAdaptiveSimulation(thread = 1, threadIDs = simulationSpecs$threadIDs,
+                                            tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
+                                            nProfiles = nProfiles,
+                                            abilityQ = simDataList$simAbilityQ,
+                                            itemcovs = simDataList$simItemCovs,
+                                            nItems = nItems,
+                                            profileMatrix= profileMatrix,
+                                            startingProfileProbablity = currentProfileProbablity,
+                                            itemPool = itemPool,
+                                            trueParameters = trueParameters,
+                                            trueProfiles = trueProfiles,
+                                            itemProbArray= itemProbArray,
+                                            maxItems = simulationSpecs$maxItems,
+                                            itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+                                            itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+                                            nItemSamples = simulationSpecs$nItemSamples,
+                                            stopCriterion = simulationSpecs$stopCriterion,
+                                            calculateSHE = simulationSpecs$calculateSHE)
+
+   result[[2]] = parallelAdaptiveSimulation(thread = 2, threadIDs = simulationSpecs$threadIDs,
+                                            tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
+                                            nProfiles = nProfiles,
+                                            abilityQ = simDataList$simAbilityQ,
+                                            itemcovs = simDataList$simItemCovs,
+                                            nItems = nItems,
+                                            profileMatrix= profileMatrix,
+                                            startingProfileProbablity = currentProfileProbablity,
+                                            itemPool = itemPool,
+                                            trueParameters = trueParameters,
+                                            trueProfiles = trueProfiles,
+                                            itemProbArray= itemProbArray,
+                                            maxItems = simulationSpecs$maxItems,
+                                            itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+                                            itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+                                            nItemSamples = simulationSpecs$nItemSamples,
+                                            stopCriterion = simulationSpecs$stopCriterion,
+                                            calculateSHE = simulationSpecs$calculateSHE)
+
+   result[[3]] = parallelAdaptiveSimulation(thread = 3, threadIDs = simulationSpecs$threadIDs,
+                                            tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
+                                            nProfiles = nProfiles,
+                                            abilityQ = simDataList$simAbilityQ,
+                                            itemcovs = simDataList$simItemCovs,
+                                            nItems = nItems,
+                                            profileMatrix= profileMatrix,
+                                            startingProfileProbablity = currentProfileProbablity,
+                                            itemPool = itemPool,
+                                            trueParameters = trueParameters,
+                                            trueProfiles = trueProfiles,
+                                            itemProbArray= itemProbArray,
+                                            maxItems = simulationSpecs$maxItems,
+                                            itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+                                            itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+                                            nItemSamples = simulationSpecs$nItemSamples,
+                                            stopCriterion = simulationSpecs$stopCriterion,
+                                            calculateSHE = simulationSpecs$calculateSHE)
+
+   result[[4]] = parallelAdaptiveSimulation(thread = 4, threadIDs = simulationSpecs$threadIDs,
+                                            tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
+                                            nProfiles = nProfiles,
+                                            abilityQ = simDataList$simAbilityQ,
+                                            itemcovs = simDataList$simItemCovs,
+                                            nItems = nItems,
+                                            profileMatrix= profileMatrix,
+                                            startingProfileProbablity = currentProfileProbablity,
+                                            itemPool = itemPool,
+                                            trueParameters = trueParameters,
+                                            trueProfiles = trueProfiles,
+                                            itemProbArray= itemProbArray,
+                                            maxItems = simulationSpecs$maxItems,
+                                            itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+                                            itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+                                            nItemSamples = simulationSpecs$nItemSamples,
+                                            stopCriterion = simulationSpecs$stopCriterion,
+                                            calculateSHE = simulationSpecs$calculateSHE)
+
+
+
+
+   # cl = parallel::makeCluster(simulationSpecs$nCores, outfile = "", setup_strategy = "sequential")
    #
-   # result[[2]] = parallelAdaptiveSimulation(thread = 2, threadIDs = simulationSpecs$threadIDs,
-   #                                          tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
-   #                                          nProfiles = nProfiles,
-   #                                          abilityQ = simDataList$simAbilityQ,
-   #                                          itemcovs = simDataList$simItemCovs,
-   #                                          nItems = nItems,
-   #                                          profileMatrix= profileMatrix,
-   #                                          startingProfileProbablity = currentProfileProbablity,
-   #                                          itemPool = itemPool,
-   #                                          trueParameters = trueParameters,
-   #                                          trueProfiles = trueProfiles,
-   #                                          itemProbArray= itemProbArray,
-   #                                          maxItems = simulationSpecs$maxItems,
-   #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-   #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-   #                                          nItemSamples = simulationSpecs$nItemSamples,
-   #                                          stopCriterion = simulationSpecs$stopCriterion,
-   #                                          calculateSHE = simulationSpecs$calculateSHE)
+   # #set random seed
+   # seed =.Random.seed[1]
    #
-   # result[[3]] = parallelAdaptiveSimulation(thread = 3, threadIDs = simulationSpecs$threadIDs,
-   #                                          tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
-   #                                          nProfiles = nProfiles,
-   #                                          abilityQ = simDataList$simAbilityQ,
-   #                                          itemcovs = simDataList$simItemCovs,
-   #                                          nItems = nItems,
-   #                                          profileMatrix= profileMatrix,
-   #                                          startingProfileProbablity = currentProfileProbablity,
-   #                                          itemPool = itemPool,
-   #                                          trueParameters = trueParameters,
-   #                                          trueProfiles = trueProfiles,
-   #                                          itemProbArray= itemProbArray,
-   #                                          maxItems = simulationSpecs$maxItems,
-   #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-   #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-   #                                          nItemSamples = simulationSpecs$nItemSamples,
-   #                                          stopCriterion = simulationSpecs$stopCriterion,
-   #                                          calculateSHE = simulationSpecs$calculateSHE)
+   # parallel::clusterSetRNGStream(cl = cl, iseed = seed)
    #
-   # result[[4]] = parallelAdaptiveSimulation(thread = 4, threadIDs = simulationSpecs$threadIDs,
-   #                                          tempEstimatedParameters = tempEstimatedParameters, calibration = calibration,
-   #                                          nProfiles = nProfiles,
-   #                                          abilityQ = simDataList$simAbilityQ,
-   #                                          itemcovs = simDataList$simItemCovs,
-   #                                          nItems = nItems,
-   #                                          profileMatrix= profileMatrix,
-   #                                          startingProfileProbablity = currentProfileProbablity,
-   #                                          itemPool = itemPool,
-   #                                          trueParameters = trueParameters,
-   #                                          trueProfiles = trueProfiles,
-   #                                          itemProbArray= itemProbArray,
-   #                                          maxItems = simulationSpecs$maxItems,
-   #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-   #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-   #                                          nItemSamples = simulationSpecs$nItemSamples,
-   #                                          stopCriterion = simulationSpecs$stopCriterion,
-   #                                          calculateSHE = simulationSpecs$calculateSHE)
-
-
-
-
-   cl = parallel::makeCluster(simulationSpecs$nCores, outfile = "", setup_strategy = "sequential")
-
-   #set random seed
-   seed =.Random.seed[1]
-
-   parallel::clusterSetRNGStream(cl = cl, iseed = seed)
-
-   parallel::clusterExport(
-     cl = cl,
-     varlist = c("adaptiveSimulation",
-                 "currentProfileProbablity",
-                 "simDataList",
-                 "simulationSpecs",
-                 "selectNewItem",
-                 "nProfiles"),
-     envir = environment()
-   )
-
-
-   result = parallel::parLapply(
-     cl = cl,
-     X = 1:4,
-     fun = parallelAdaptiveSimulation,
-     threadIDs = simulationSpecs$threadIDs,
-     tempEstimatedParameters = tempEstimatedParameters,
-     calibration = calibration,
-     nProfiles = nProfiles,
-     abilityQ = simDataList$simAbilityQ,
-     itemcovs = simDataList$simItemCovs,
-     nItems = nItems,
-     profileMatrix= profileMatrix,
-     startingProfileProbablity = currentProfileProbablity,
-     itemPool = itemPool,
-     maxItems = simulationSpecs$maxItems,
-     trueParameters = trueParameters,
-     trueProfiles = trueProfiles,
-     itemProbArray= itemProbArray,
-     itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-     itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-     stopCriterion = simulationSpecs$stopCriterion,
-     calculateSHE = simulationSpecs$calculateSHE
-   )
-
-   parallel::stopCluster(cl = cl)
+   # parallel::clusterExport(
+   #   cl = cl,
+   #   varlist = c("adaptiveSimulation",
+   #               "currentProfileProbablity",
+   #               "simDataList",
+   #               "simulationSpecs",
+   #               "selectNewItem",
+   #               "nProfiles"),
+   #   envir = environment()
+   # )
+   #
+   #
+   # result = parallel::parLapply(
+   #   cl = cl,
+   #   X = 1:4,
+   #   fun = parallelAdaptiveSimulation,
+   #   threadIDs = simulationSpecs$threadIDs,
+   #   tempEstimatedParameters = tempEstimatedParameters,
+   #   calibration = calibration,
+   #   nProfiles = nProfiles,
+   #   abilityQ = simDataList$simAbilityQ,
+   #   itemcovs = simDataList$simItemCovs,
+   #   nItems = nItems,
+   #   profileMatrix= profileMatrix,
+   #   startingProfileProbablity = currentProfileProbablity,
+   #   itemPool = itemPool,
+   #   maxItems = simulationSpecs$maxItems,
+   #   trueParameters = trueParameters,
+   #   trueProfiles = trueProfiles,
+   #   itemProbArray= itemProbArray,
+   #   itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+   #   itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+   #   stopCriterion = simulationSpecs$stopCriterion,
+   #   calculateSHE = simulationSpecs$calculateSHE
+   # )
+   #
+   # parallel::stopCluster(cl = cl)
 
 
    runningData = rbind(
@@ -603,7 +622,7 @@ print(calibration)
      result[[4]]$estimatedProfileProbability
    )
 
-print(maxRhat)
+
    calibration = calibration + 1
 
 }

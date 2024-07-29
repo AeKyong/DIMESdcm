@@ -21,7 +21,7 @@ edcm_full = function(){
 
   for(i in 1:nItems){
     intercept[i] ~ dnorm(itemcov_intercept[i], inVar_intercept)
-    lambda[i] ~ dnorm(itemcov_lambda[i], inVar_lambda);T(-0.5,)
+    lambda[i] ~ dnorm(itemcov_lambda[i], inVar_lambda);T(0,)
   }
 
 
@@ -36,25 +36,22 @@ edcm_full = function(){
   # inVar_intercept <- 1/var_intercept
   # inVar_lambda <- 1/var_lambda
   #
-  # var_intercept ~ dunif(0,1)
-  # var_lambda ~ dunif(0,1)
+  # var_intercept ~ dunif(0,100)
+  # var_lambda ~ dunif(0,100)
 
   # # VAR ~ logNormal
   # inVar_intercept <- 1/var_intercept
   # inVar_lambda <- 1/var_lambda
   #
-  # var_intercept ~ dlnorm(-0.5, 0.1)
-  # var_lambda ~ dlnorm(-0.5, 0.1)
+  # var_intercept ~ dlnorm(-0.8, 0.1)
+  # var_lambda ~ dlnorm(0.1, 0.1)
 
   # VAR ~ GAMMA
   inVar_intercept <- 1/var_intercept
   inVar_lambda <- 1/var_lambda
 
-  var_intercept <- sd_intercept^2
-  var_lambda <- sd_lambda^2
-
-  sd_intercept ~ dgamma(.001, .001)
-  sd_lambda ~ dgamma(.001, .001)
+  var_intercept ~ dgamma(hyperParaA, hyperParaB)
+  var_lambda ~ dgamma(hyperParaA, hyperParaB)
 
 
 

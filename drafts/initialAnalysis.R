@@ -293,8 +293,8 @@ edcm_full = function(){
   inVar_intercept <- 1/var_intercept
   inVar_lambda <- 1/var_lambda
 
-  var_intercept ~ dunif(0,1)
-  var_lambda ~ dunif(0,1)
+  var_intercept ~ dunif(0,10)
+  var_lambda ~ dunif(0,10)
 
 
   for(covi in 1:nItemCovs){
@@ -344,9 +344,9 @@ edcm_full_run = jags.parallel(
 
 # check max rhat
 maxRhat = max(edcm_full_run$BUGSoutput$summary[,"Rhat"])
-
+summary = edcm_full_run$BUGSoutput$summary
 # item parameter chains
 itemParameterChains = edcm_full_run[["BUGSoutput"]][["sims.matrix"]]
 
-save(itemParameterChains, file = "itemParameterChains.rda", row.names = F)
+save(itemParameterChains, file = "data/itemParameterChains.rda", row.names = F)
 

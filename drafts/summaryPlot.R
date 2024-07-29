@@ -317,11 +317,11 @@ for (cri in 1:length(criteria)) {
 
 
 # check maxRhat
-a = NULL
+maxrhat = NULL
 for (i in 1:40) {
-  a= c(a, calibrationData[[i]]$maxRhat)
+  maxrhat= c(maxrhat, calibrationData[[i]]$maxRhat)
 }
-plot(a)
+plot(maxrhat)
 abline(a=1.1, b=0)
 
 
