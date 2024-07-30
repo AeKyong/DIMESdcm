@@ -265,7 +265,7 @@ colnames(attributeRecoveryL) = c("value", "conditionN", "replicationN", "arrayNu
 
 
 # draw plots & get summary statistics ===================================================================
-# pdf("summary plots.pdf")
+pdf("summary plots.pdf")
 criteria = list(betaInterceptBiasL, betaLambdaBiasL, varInterceptBiasL, varLambdaBiasL, betaInterceptRmseL ,betaLambdaRmseL,
                 varInterceptRmseL, varLambdaRmseL, exposureRateL, exposureChisquareL, profileRecoveryL, attributeRecoveryL)
 criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias", "betaInterceptRmse", "betaLambdaRmse",
@@ -310,12 +310,6 @@ for (cri in 1:length(criteria)) {
   }
 }
 
-
-
-# dev.off()
-
-
-
 # check maxRhat
 maxrhat = NULL
 for (i in 1:40) {
@@ -324,19 +318,5 @@ for (i in 1:40) {
 plot(maxrhat)
 abline(a=1.1, b=0)
 
-
-
-i=21
-plot(results[[i]]$betaInterceptBias) #good<.14; absolute bias getting high
-plot(results[[i]]$betaLambdaBias) #good<.04; absolute bias getting high
-plot(results[[i]]$varInterceptBias) # bad: further from zero
-plot(results[[i]]$varLambdaBias) # bad: further from zero
-plot(results[[i]]$betaInterceptRMSE) #bad; SE getting high?
-plot(results[[i]]$betaLambdaRMSE) #bad; SE getting high
-plot(results[[i]]$varInterceptRMSE) #bad;
-plot(results[[i]]$varLambdaRMSE) #bad;
-plot(results[[i]]$exposureRateMean) #bad; getting decrease
-plot(results[[i]]$chiSquare) #good; getting higher
-plot(results[[i]]$profileRecoveryRate) #good but wave; getting high with wave
-plot(results[[i]]$attributeRecoveryRate) #not exact pattern
+dev.off()
 
