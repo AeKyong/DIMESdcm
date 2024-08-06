@@ -84,15 +84,17 @@ for (file in 1:length(repFiles)){
     # get deviation: eap - trueValues
     deviation = dat$eap- dat$trueValues
 
-    # get bias
-    betaInterceptBias[nCalibration] = mean(deviation[betaInterceptRow])
-    betaLambdaBias[nCalibration] = mean(deviation[betaLambdaRow])
-    varInterceptBias[nCalibration] = mean(deviation[varInterceptRow])
-    varLambdaBias[nCalibration] = mean(deviation[varLambdaRow])
+    # # get bias
+    # betaInterceptBias[nCalibration] = mean(deviation[betaInterceptRow])
+    # betaLambdaBias[nCalibration] = mean(deviation[betaLambdaRow])
+    # varInterceptBias[nCalibration] = mean(deviation[varInterceptRow])
+    # varLambdaBias[nCalibration] = mean(deviation[varLambdaRow])
 
-    # # get absolute bias
-    # betaInterceptBias[nCalibration] = mean(abs(deviation[betaInterceptRow]))
-    # betaLambdaBias[nCalibration] = mean(abs(deviation[betaLambdaRow]))
+    # get absolute bias
+    betaInterceptBias[nCalibration] = mean(abs(deviation[betaInterceptRow]))
+    betaLambdaBias[nCalibration] = mean(abs(deviation[betaLambdaRow]))
+    varInterceptBias[nCalibration] = mean(abs(deviation[varInterceptRow]))
+    varLambdaBias[nCalibration] = mean(abs(deviation[varLambdaRow]))
 
     # get rmse
     betaInterceptRMSE[nCalibration] = sqrt(mean(deviation[betaInterceptRow]^2))

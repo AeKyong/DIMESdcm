@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#####Set Scheduler Configuration Directives#####
+
+#Name the job:
+#$ -N DCM-Simulation
+
+#Send e-mail at beginning/end/suspension of job
+#$ -m bes
+
+#E-mail address to send to
+#$ -M aekyong-jung@uiowa.edu
+
+#Start script in current working directory
+#$ -cwd
+
+#####End Set Scheduler Configuration Directives#####
+
+
+#####Resource Selection Directives#####
+
+#See the HPC wiki for complete resource information: https://wiki.uiowa.edu/display/hpcdocs/Argon+Cluster
+#Select the queue to run in
+#$ -q CASMA
+
+#Request four cores
+#$ -pe smp 4
+
+#####End Resource Selection Directives#####
+
+module load stack/2022.2
+module load stack/2022.2-base_arch
+module load r/4.2.2_gcc-9.5.0
+
+Rscript catSimulation.R $SGE_TASK_ID
