@@ -25,34 +25,13 @@ edcm_full = function(){
   }
 
 
-  # # VAR ~ INV_GAMMA
-  # inVar_intercept ~ dgamma(1e-3,1e-3)
-  # inVar_lambda ~ dgamma(1e-3,1e-3)
-  #
-  # var_intercept <- 1/inVar_intercept
-  # var_lambda <- 1/inVar_lambda
-
-  # # VAR ~ UNIFORM
-  # inVar_intercept <- 1/var_intercept
-  # inVar_lambda <- 1/var_lambda
-  #
-  # var_intercept ~ dunif(0,100)
-  # var_lambda ~ dunif(0,100)
 
   # # VAR ~ LOGNORMAL
   inVar_intercept <- 1/var_intercept
   inVar_lambda <- 1/var_lambda
 
-  var_intercept ~ dlnorm(hyperParaA, hyperParaB)
-  var_lambda ~ dlnorm(hyperParaA, hyperParaB)
-
-  # # VAR ~ GAMMA
-  # inVar_intercept <- 1/var_intercept
-  # inVar_lambda <- 1/var_lambda
-  #
-  # var_intercept ~ dgamma(hyperParaA, hyperParaB)
-  # var_lambda ~ dgamma(hyperParaA, hyperParaB)
-
+  var_intercept ~ dlnorm(varHyperParaA, varHyperParaB)
+  var_lambda ~ dlnorm(varHyperParaA, varHyperParaB)
 
 
 
