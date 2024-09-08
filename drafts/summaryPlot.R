@@ -1,18 +1,27 @@
-# rm(list=ls())
+rm(list=ls())
 library(ggplot2)
+
+setwd("drafts/result")
 
 # list files in directory
 directoryFiles = dir()
-nCondition = 1
-nReplicationsPerCondition = 1
+nCondition = 96
+nReplicationsPerCondition = 5
 
+
+# list only simulation results files
+repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
+# repFiles = paste0("rep_", 161:(nCondition*nReplicationsPerCondition), ".RData")
+
+
+
+# check incomplete files
+total = c(1:480)
+completeFiles = as.numeric(gsub("\\D", '', repFiles))
+incompleteFiles = total[which(!total %in% completeFiles)]
 
 
 # calculate measurement accuracy =================================================
-# list only simulation results files
-repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
-
-
 # calculate bias, rmse, exposure rate, profile recovery rate (list by arrayNumber)
 nAttributes = 3
 nProfiles = 2^nAttributes
@@ -290,6 +299,7 @@ for (cri in 1:length(criteria)) {
             data = criterionCond,
             xlab = "# of Calibration",
             ylab = criteriaName[cri],
+            ylim  = c(0, .8),
             main = paste0("condition", condition)
     )
 
@@ -312,13 +322,13 @@ for (cri in 1:length(criteria)) {
   }
 }
 
-# check maxRhat
-maxrhat = NULL
-for (i in 1:40) {
-  maxrhat= c(maxrhat, calibrationData[[i]]$maxRhat)
-}
-plot(maxrhat)
-abline(a=1.1, b=0)
+# # check maxRhat
+# maxrhat = NULL
+# for (i in 1:40) {
+#   maxrhat= c(maxrhat, calibrationData[[i]]$maxRhat)
+# }
+# plot(maxrhat)
+# abline(a=1.1, b=0)
 
 dev.off()
 
