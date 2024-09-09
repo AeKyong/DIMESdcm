@@ -268,13 +268,12 @@ colnames(attributeRecoveryL) = c("value", "conditionN", "replicationN", "arrayNu
 
 
 # draw plots & get summary statistics ===================================================================
-pdf("summary plots.pdf")
 criteria = list(betaInterceptBiasL, betaLambdaBiasL, varInterceptBiasL, varLambdaBiasL, betaInterceptRmseL ,betaLambdaRmseL,
                 varInterceptRmseL, varLambdaRmseL, exposureRateL, exposureChisquareL, profileRecoveryL, attributeRecoveryL)
 criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias", "betaInterceptRmse", "betaLambdaRmse",
                  "varInterceptRmse", "varLambdaRmse", "exposureRate", "exposureChisquare", "profileRecovery", "attributeRecovery")
 
-
+pdf("plots.pdf")
 descriptiveStatistics = NULL
 for (cri in 1:length(criteria)) {
 
@@ -379,7 +378,7 @@ for (cond in 1:nConditions){
 }
 
 # Function for summarizing results by factor ===================================
-summaryByFactor = function (criteria) {
+summaryByFactor = function (criteria, conditionsMatrix) {
 
   criteria = as.data.frame(criteria)
   statistics = NULL
@@ -433,10 +432,10 @@ summaryByFactor = function (criteria) {
 }
 
 # Functions for plotting by factor =============================================
-plotByFactor = function(criteria, criteriaName) {
+plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
 
   # get statistics by factor
-  statistics = summaryByFactor(criteria = criteria)
+  statistics = summaryByFactor(criteria = criteria, conditionsMatrix = conditionsMatrix)
 
   par(mfrow = c(2,2))
   # stop criteria =======================
@@ -509,9 +508,9 @@ plotByFactor = function(criteria, criteriaName) {
 
 }
 
-pdf("summaryByFactor.pdf")
+pdf("plotsByFactor.pdf")
 for (i in 1:length(criteria)){
-  plotByFactor(criteria = criteria[i],criteriaName = criteriaName[i])
+  plotByFactor(criteria = criteria[i],criteriaName = criteriaName[i], conditionsMatrix=conditionsMatrix)
 }
 dev.off()
 
