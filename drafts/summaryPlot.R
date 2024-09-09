@@ -1,7 +1,7 @@
 rm(list=ls())
 library(ggplot2)
 
-setwd("drafts/result")
+# setwd("drafts/result")
 
 # list files in directory
 directoryFiles = dir()
@@ -10,9 +10,8 @@ nReplicationsPerCondition = 5
 
 
 # list only simulation results files
-repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
-# repFiles = paste0("rep_", 161:(nCondition*nReplicationsPerCondition), ".RData")
-
+# repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
+repFiles = paste0("rep_", 1:(nCondition*nReplicationsPerCondition),".RData")
 
 
 # check incomplete files
@@ -234,13 +233,6 @@ for (arrayNumber in 1:length(repFiles)){
 
 }
 
-# criteria = list(betaInterceptBiasL, betaLambdaBiasL)
-#
-# for (i in 1:length(criteria)){
-#
-#   criteria[[1]] = as.data.frame(criteria[[1]])
-# }
-
 
 # change to data frame
 betaInterceptBiasL = as.data.frame(betaInterceptBiasL)
@@ -294,14 +286,37 @@ for (cri in 1:length(criteria)) {
     # choose one condition in the criteria
     criterionCond = criterion[which(criterion$conditionN == condition),]
 
-    # draw a box plot
-    boxplot(value ~ calibrationN,
-            data = criterionCond,
-            xlab = "# of Calibration",
-            ylab = criteriaName[cri],
-            ylim  = c(0, .8),
-            main = paste0("condition", condition)
-    )
+
+
+    if (cri %in% c(4, 8)){
+      # varLambda bias, rmse
+      boxplot(value ~ calibrationN,
+              data = criterionCond,
+              xlab = "# of Calibration",
+              ylab = criteriaName[cri],
+              ylim = c(0, 12),
+              main = paste0("condition", condition)
+      )
+    } else if (cri %in% c(10)){
+      # exposure chi square
+      boxplot(value ~ calibrationN,
+              data = criterionCond,
+              xlab = "# of Calibration",
+              ylab = criteriaName[cri],
+              ylim = c(0, 30),
+              main = paste0("condition", condition)
+      )
+    } else {
+      # draw a box plot
+      boxplot(value ~ calibrationN,
+              data = criterionCond,
+              xlab = "# of Calibration",
+              ylab = criteriaName[cri],
+              ylim  = c(0, 1),
+              main = paste0("condition", condition)
+      )
+    }
+
 
 
      # summary statistics
@@ -322,6 +337,187 @@ for (cri in 1:length(criteria)) {
   }
 }
 
+dev.off()
+
+
+
+
+# Summary Statistics by Factors ==============================================
+# create conditions list
+conditions = list(
+  nItemsInPool = c(40, 105),
+  initialPilotSampleSize = c(30, 300, 2000),
+  nNewStudents = c(30),
+  itemUpdateFunction = c(
+    "Sample 1",
+    "Sample 10",
+    "EAP",
+    "Mode"
+  ),
+  itemSummaryFunction = c(
+    "Sample 1",
+    "Sample 10",
+    "EAP",
+    "Mode"
+  ),
+  stopCriterion = c(.7, .8)
+)
+
+# number of conditions
+nConditions = prod(unlist(lapply(X = conditions, FUN = length)))
+
+conditionsMatrix = matrix(NA, nrow = nConditions, ncol = length(conditions))
+colnames(conditionsMatrix) = names(conditions)
+
+cond = 1
+for (cond in 1:nConditions){
+  conditionsMatrix[cond,] = dec2bin(
+    decimal_number = cond - 1,
+    nattributes = length(conditions),
+    basevector = unlist(lapply(X = conditions, FUN = length))
+  ) + 1
+}
+
+# Function for summarizing results by factor ===================================
+summaryByFactor = function (criteria) {
+
+  criteria = as.data.frame(criteria)
+  statistics = NULL
+  for (calibrationN in 1:40) {
+    nCalibration = criteria[which(criteria$calibrationN == calibrationN), c("value","conditionN","arrayNumber","calibrationN")]
+
+    # stop criteria
+    stop1 = which(conditionsMatrix[,"stopCriterion"] == 1)
+    stop2 = which(conditionsMatrix[,"stopCriterion"] == 2)
+    stop1.mean = mean(nCalibration[which(nCalibration$conditionN %in% stop1),"value"])
+    stop2.mean = mean(nCalibration[which(nCalibration$conditionN %in% stop2),"value"])
+    stop = cbind(stop1.mean, stop2.mean)
+
+    # item summary function
+    summary1 = which(conditionsMatrix[,"itemSummaryFunction"] == 1)
+    summary2 = which(conditionsMatrix[,"itemSummaryFunction"] == 2)
+    summary3 = which(conditionsMatrix[,"itemSummaryFunction"] == 3)
+    summary4 = which(conditionsMatrix[,"itemSummaryFunction"] == 4)
+    summary1.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary1), "value"])
+    summary2.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary2), "value"])
+    summary3.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary3), "value"])
+    summary4.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary4), "value"])
+    summary = cbind(summary1.mean, summary2.mean, summary3.mean, summary4.mean)
+
+    # item update function
+    update1 = which(conditionsMatrix[,"itemUpdateFunction"] == 1)
+    update2 = which(conditionsMatrix[,"itemUpdateFunction"] == 2)
+    update3 = which(conditionsMatrix[,"itemUpdateFunction"] == 3)
+    update4 = which(conditionsMatrix[,"itemUpdateFunction"] == 4)
+    update1.mean = mean(nCalibration[which(nCalibration$conditionN %in% update1), "value"])
+    update2.mean = mean(nCalibration[which(nCalibration$conditionN %in% update2), "value"])
+    update3.mean = mean(nCalibration[which(nCalibration$conditionN %in% update3), "value"])
+    update4.mean = mean(nCalibration[which(nCalibration$conditionN %in% update4), "value"])
+    update = cbind(update1.mean, update2.mean, update3.mean, update4.mean)
+
+    # initial pilot sample size
+    size1 = which(conditionsMatrix[,"initialPilotSampleSize"] == 1)
+    size2 = which(conditionsMatrix[,"initialPilotSampleSize"] == 2)
+    size3 = which(conditionsMatrix[,"initialPilotSampleSize"] == 3)
+    size1.mean = mean(nCalibration[which(nCalibration$conditionN %in% size1), "value"])
+    size2.mean = mean(nCalibration[which(nCalibration$conditionN %in% size2), "value"])
+    size3.mean = mean(nCalibration[which(nCalibration$conditionN %in% size3), "value"])
+    size = cbind(size1.mean, size2.mean, size3.mean)
+
+    stat = cbind(stop, summary, update, size)
+    statistics = rbind(statistics, stat)
+  }
+
+  return(statistics)
+
+}
+
+# Functions for plotting by factor =============================================
+plotByFactor = function(criteria, criteriaName) {
+
+  # get statistics by factor
+  statistics = summaryByFactor(criteria = criteria)
+
+  par(mfrow = c(2,2))
+  # stop criteria =======================
+  stop = statistics[,c("stop1.mean","stop2.mean")]
+  matplot(stop,
+          type="l",
+          ylab=criteriaName,
+          main="Stop Criteria",
+          col=1:2,
+          lty=1
+          )
+
+  legend("topright",
+         legend=c("0.7","0.8"),
+         col=1:2,
+         lty=1
+         )
+
+
+  # item summary function ====================
+  summary = statistics[,c("summary1.mean","summary2.mean","summary3.mean","summary4.mean")]
+  matplot(summary,
+          type="l",
+          ylab=criteriaName,
+          main="Item Summary Function",
+          col=1:4,
+          lty=1
+          )
+
+  legend("topright",
+         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
+         col = 1:4,
+         lty = 1
+         )
+
+
+  # item update function =====================
+  update = statistics[,c("update1.mean","update2.mean","update3.mean","update4.mean")]
+  matplot(update,
+          type="l",
+          ylab=criteriaName,
+          main="Item Update Function",
+          col=1:4,
+          lty=1
+          )
+
+  legend("topright",
+         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
+         col = 1:4,
+         lty = 1
+         )
+
+
+  # pilot sample size function ================
+  pilot = statistics[,c("size1.mean","size2.mean","size3.mean")]
+  matplot(pilot,
+          type="l",
+          ylab=criteriaName,
+          main="Pilot Sample Size",
+          col=1:3,
+          lty=1
+          )
+
+  legend("topright",
+         legend=c("30","300", "2000"),
+         col = 1:3,
+         lty = 1
+         )
+
+
+}
+
+pdf("summaryByFactor.pdf")
+for (i in 1:length(criteria)){
+  plotByFactor(criteria = criteria[i],criteriaName = criteriaName[i])
+}
+dev.off()
+
+
+
+
 # # check maxRhat
 # maxrhat = NULL
 # for (i in 1:40) {
@@ -330,5 +526,6 @@ for (cri in 1:length(criteria)) {
 # plot(maxrhat)
 # abline(a=1.1, b=0)
 
-dev.off()
+
+
 
