@@ -73,7 +73,7 @@ for (file in 1:length(repFiles)){
   chiSquare = NULL
   profileRecoveryRate = NULL
   attributeRecoveryRate = NULL
-
+  unconvg = NULL
   for (nCalibration in 1:length(calibration)) {
 
 
@@ -151,8 +151,12 @@ for (file in 1:length(repFiles)){
     nSameAttribute = length(which(nSamePattern == 0))
     attributeRecoveryRate[nCalibration] = nSameAttribute / length(nSamePattern)
 
-
-
+    # maxRhat
+   if(calibrationData[[nCalibration]]$maxRhat>1.1){
+     unconvg[nCalibration] = 1
+   }else{
+     unconvg[nCalibration] = 0
+       }
 
   }
 
@@ -162,7 +166,8 @@ for (file in 1:length(repFiles)){
                                varInterceptRMSE = varInterceptRMSE, varLambdaRMSE = varLambdaRMSE,
                                exposureRateMean = exposureRateMean,  chiSquare = chiSquare,
                                # unUsedItemN = unUsedItemN,exposureRateMax = exposureRateMax,
-                               profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate)
+                               profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate,
+                               unconvg = unconvg)
 
 }
 
@@ -181,6 +186,7 @@ exposureChisquareL = NULL
 profileRecoveryL = NULL
 attributeRecoveryL = NULL
 
+nUnconverged = NULL
 for (arrayNumber in 1:length(repFiles)){
 
   conditionN = ceiling(arrayNumber/nReplicationsPerCondition)
@@ -231,7 +237,14 @@ for (arrayNumber in 1:length(repFiles)){
   attributeRecoveryL = rbind(attributeRecoveryL, attributeR)
 
 
+  # not converged ==============
+  nUnconverged[arrayNumber] =  sum(results[[arrayNumber]]$unconvg)
+
 }
+
+sum(a[(1:160),"nUnconverged"])/(160*40)
+sum(a[(161:320),"nUnconverged"])/(160*40)
+sum(a[(321:480),"nUnconverged"])/(160*40)
 
 
 # change to data frame
@@ -490,8 +503,8 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
 
 
   # pilot sample size function ================
-  pilot = statistics[,c("size1.mean","size2.mean","size3.mean")]
-  matplot(pilot,
+  size = statistics[,c("size1.mean","size2.mean","size3.mean")]
+  matplot(size,
           type="l",
           ylab=criteriaName,
           main="Pilot Sample Size",
@@ -524,7 +537,6 @@ dev.off()
 # }
 # plot(maxrhat)
 # abline(a=1.1, b=0)
-
 
 
 
