@@ -5,17 +5,17 @@ library(ggplot2)
 
 # list files in directory
 directoryFiles = dir()
-nCondition = 96
+nCondition = 32
 nReplicationsPerCondition = 5
 
 
 # list only simulation results files
 # repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
-repFiles = paste0("rep_", 1:(nCondition*nReplicationsPerCondition),".RData")
+repFiles = paste0("rep_", 641:(640+nCondition*nReplicationsPerCondition),".RData")
 
 
 # check incomplete files
-total = c(1:480)
+total = c(641:800)
 completeFiles = as.numeric(gsub("\\D", '', repFiles))
 incompleteFiles = total[which(!total %in% completeFiles)]
 
@@ -151,7 +151,9 @@ for (file in 1:length(repFiles)){
     nSameAttribute = length(which(nSamePattern == 0))
     attributeRecoveryRate[nCalibration] = nSameAttribute / length(nSamePattern)
 
-    # maxRhat
+
+
+    # maxRhat ===================================================
    if(calibrationData[[nCalibration]]$maxRhat>1.1){
      unconvg[nCalibration] = 1
    }else{
@@ -242,9 +244,9 @@ for (arrayNumber in 1:length(repFiles)){
 
 }
 
-sum(a[(1:160),"nUnconverged"])/(160*40)
-sum(a[(161:320),"nUnconverged"])/(160*40)
-sum(a[(321:480),"nUnconverged"])/(160*40)
+sum(nUnconverged[(1:160)])/(160*40)   #pilot sample 30: 0.1275(40 itempool)  0.1515625(150 itempool)
+sum(nUnconverged[(161:320)])/(160*40) #pilot sample 300: 0.2492187(40 itempool) 0.05921875(150 itempool)
+sum(nUnconverged[(321:480)])/(160*40) #pilot sample 2000: 0.4578125
 
 
 # change to data frame
@@ -446,7 +448,7 @@ summaryByFactor = function (criteria, conditionsMatrix) {
 
 # Functions for plotting by factor =============================================
 plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
-
+browser()
   # get statistics by factor
   statistics = summaryByFactor(criteria = criteria, conditionsMatrix = conditionsMatrix)
 
@@ -538,5 +540,5 @@ dev.off()
 # plot(maxrhat)
 # abline(a=1.1, b=0)
 
-
+# copied rep: 313 391 397 434 463 477
 
