@@ -393,6 +393,7 @@ for (cond in 1:nConditions){
 }
 
 # Function for summarizing results by factor ===================================
+# !! The factor, item pool, is not considered now!!
 summaryByFactor = function (criteria, conditionsMatrix) {
 
   criteria = as.data.frame(criteria)
