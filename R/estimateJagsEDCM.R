@@ -1,7 +1,7 @@
 estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
-                            betaInterceptMean=3, betaInterceptSD=.1, betaLambdaMean=3, betaLambdaSD=.1,
+                            betaInterceptInitMean=3, betaInterceptInitSD=.1, betaLambdaInitMean=3, betaLambdaInitSD=.1,
                             varHyperParaA, varHyperParaB, varInterceptMean, varInterceptSD, varLambdaMean, varLambdaSD) {
-
+browser()
   # count attributes and profiles
   nAttributes = ncol(abilityQ)
   nProfiles = 2^nAttributes
@@ -62,8 +62,8 @@ estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
 
 
   jags.inits = function(){
-    list("beta_intercept" = rnorm(ncol(itemcovs), mean = betaInterceptMean, sd = betaInterceptSD),
-         "beta_lambda" = rnorm(ncol(itemcovs), mean = betaLambdaMean, sd = betaLambdaSD),
+    list("beta_intercept" = rnorm(ncol(itemcovs), mean = betaInterceptInitMean, sd = betaInterceptInitSD),
+         "beta_lambda" = rnorm(ncol(itemcovs), mean = betaLambdaInitMean, sd = betaLambdaInitSD),
          "var_intercept" = rnorm(1, mean = varInterceptMean, sd = varInterceptSD),
          "var_lambda" = rnorm(1, mean = varLambdaMean, sd = varLambdaSD))
 

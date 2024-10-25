@@ -75,9 +75,7 @@ simulateEDCMfromChains = function(nObs, nItems, itemParameterChains, itemcovs, a
 
   # change profiles to attribute profiles (alpha_c)
   examineeProfile = matrix(NA, nrow = nObs, ncol = nAttributes)
-  for(obs in 1:nObs){
-    examineeProfile[obs,1:nAttributes] = profileMatrix[profiles[obs], 1:nAttributes]
-  }
+  examineeProfile[,1:nAttributes] = profileMatrix[profiles, 1:nAttributes]
   colnames(examineeProfile) = colnames(abilityQ)
 
 

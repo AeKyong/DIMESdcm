@@ -1,11 +1,11 @@
 rm(list=ls())
 library(ggplot2)
 
-# setwd("drafts/result")
+setwd("drafts/result")
 
 # list files in directory
 directoryFiles = dir()
-nCondition =96
+nCondition = 160
 nReplicationsPerCondition = 5
 
 
@@ -296,70 +296,70 @@ criteria = list(betaInterceptBiasL, betaLambdaBiasL, varInterceptBiasL, varLambd
 criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias", "betaInterceptRmse", "betaLambdaRmse",
                  "varInterceptRmse", "varLambdaRmse", "exposureRate", "exposureChisquare", "profileRecovery", "attributeRecovery")
 
-pdf("plots.pdf")
-descriptiveStatistics = NULL
-for (cri in 1:length(criteria)) {
-
-  # choose one criterion among criteriaN
-  criterion = criteria[[cri]]
-
-  for (condition in 1:nCondition) {
-
-    # choose one condition in the criteria
-    criterionCond = criterion[which(criterion$conditionN == condition),]
-
-
-
-    if (cri %in% c(4, 8)){
-      # varLambda bias, rmse
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim = c(0, 12),
-              main = paste0("condition", condition)
-      )
-    } else if (cri %in% c(10)){
-      # exposure chi square
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim = c(0, 30),
-              main = paste0("condition", condition)
-      )
-    } else {
-      # draw a box plot
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim  = c(0, 1),
-              main = paste0("condition", condition)
-      )
-    }
-
-
-
-    # summary statistics
-    for (nCalibration in 1:max(criterionCond$calibrationN)){
-
-      # choose one calibration
-      caliN = criterionCond[criterionCond$calibrationN==nCalibration,]
-      quan = as.data.frame(t(quantile(caliN$value)))
-      quan$mean = mean(caliN$value)
-      quan$sd = sd(caliN$value)
-      quan$variable = criteriaName[cri]
-      quan$conditionN = condition
-      quan$calibrationN = nCalibration
-
-      descriptiveStatistics = rbind(descriptiveStatistics, quan)
-
-    }
-  }
-}
-
-dev.off()
+# pdf("plots.pdf")
+# descriptiveStatistics = NULL
+# for (cri in 1:length(criteria)) {
+#
+#   # choose one criterion among criteriaN
+#   criterion = criteria[[cri]]
+#
+#   for (condition in 1:nCondition) {
+#
+#     # choose one condition in the criteria
+#     criterionCond = criterion[which(criterion$conditionN == condition),]
+#
+#
+#
+#     if (cri %in% c(4, 8)){
+#       # varLambda bias, rmse
+#       boxplot(value ~ calibrationN,
+#               data = criterionCond,
+#               xlab = "# of Calibration",
+#               ylab = criteriaName[cri],
+#               ylim = c(0, 12),
+#               main = paste0("condition", condition)
+#       )
+#     } else if (cri %in% c(10)){
+#       # exposure chi square
+#       boxplot(value ~ calibrationN,
+#               data = criterionCond,
+#               xlab = "# of Calibration",
+#               ylab = criteriaName[cri],
+#               ylim = c(0, 30),
+#               main = paste0("condition", condition)
+#       )
+#     } else {
+#       # draw a box plot
+#       boxplot(value ~ calibrationN,
+#               data = criterionCond,
+#               xlab = "# of Calibration",
+#               ylab = criteriaName[cri],
+#               ylim  = c(0, 1),
+#               main = paste0("condition", condition)
+#       )
+#     }
+#
+#
+#
+#     # # summary statistics
+#     # for (nCalibration in 1:max(criterionCond$calibrationN)){
+#     #
+#     #   # choose one calibration
+#     #   caliN = criterionCond[criterionCond$calibrationN==nCalibration,]
+#     #   quan = as.data.frame(t(quantile(caliN$value)))
+#     #   quan$mean = mean(caliN$value)
+#     #   quan$sd = sd(caliN$value)
+#     #   quan$variable = criteriaName[cri]
+#     #   quan$conditionN = condition
+#     #   quan$calibrationN = nCalibration
+#     #
+#     #   descriptiveStatistics = rbind(descriptiveStatistics, quan)
+#     #
+#     # }
+#   }
+# }
+#
+# dev.off()
 
 
 
@@ -401,7 +401,7 @@ for (cond in 1:nConditions){
 }
 
 # Function for summarizing results by factor ===================================
-# !! The factor, item pool, is not considered now!!
+
 summaryByFactor = function (criteria, conditionsMatrix) {
 
   criteria = as.data.frame(criteria)
@@ -447,7 +447,14 @@ summaryByFactor = function (criteria, conditionsMatrix) {
     size3.mean = mean(nCalibration[which(nCalibration$conditionN %in% size3), "value"], na.rm=T)
     size = cbind(size1.mean, size2.mean, size3.mean)
 
-    stat = cbind(stop, summary, update, size)
+    # item pool size
+    pool1 = which(conditionsMatrix[,"nItemsInPool"] == 1)
+    pool2 = which(conditionsMatrix[,"nItemsInPool"] == 2)
+    pool1.mean = mean(nCalibration[which(nCalibration$conditionN %in% pool1), "value"], na.rm=T)
+    pool2.mean = mean(nCalibration[which(nCalibration$conditionN %in% pool2), "value"], na.rm=T)
+    pool = cbind(pool1.mean, pool2.mean)
+
+    stat = cbind(stop, summary, update, size, pool)
     statistics = rbind(statistics, stat)
   }
 
@@ -461,7 +468,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   # get statistics by factor
   statistics = summaryByFactor(criteria = criteria, conditionsMatrix = conditionsMatrix)
 
-  par(mfrow = c(2,2))
+  par(mfrow = c(2,3))
   # stop criteria =======================
   stop = statistics[,c("stop1.mean","stop2.mean")]
   matplot(stop,
@@ -501,7 +508,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   matplot(update,
           type="l",
           ylab=criteriaName,
-          main="Item Update Function",
+          main="Item Selction Function",
           col=1:4,
           lty=1
   )
@@ -529,6 +536,22 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
          lty = 1
   )
 
+
+  # item pool size function ================
+  pool = statistics[,c("pool1.mean","pool2.mean")]
+  matplot(pool,
+          type="l",
+          ylab=criteriaName,
+          main="Item Pool Size",
+          col=1:2,
+          lty=1
+  )
+
+  legend("topright",
+         legend=c("40", "105"),
+         col = 1:2,
+         lty = 1
+  )
 
 }
 
