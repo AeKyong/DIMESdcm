@@ -10,10 +10,10 @@ library(reshape2)
 library(readxl)
 library(bayesplot)
 library(extraDistr)
-
+library(modeest)
 # grab command line arguments
-#arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
-arrayNumber = 321
+# arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
+arrayNumber = 3
 
 set.seed(arrayNumber)
 
@@ -207,7 +207,7 @@ itemcovsPilot = model.matrix(
 data("itemParameterChains")
 
 # implement condition values in simulation
-simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 5, nCores = 4)
+simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 1, nCores = 4)
 
 
 # generate simulation data =====================================================
@@ -274,16 +274,16 @@ print(calibration)
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
-                                       betaInterceptMean = 3,
-                                       betaInterceptSD = .1,
-                                       betaLambdaMean = 3,
-                                       betaLambdaSD = .1,
+                                       betaInterceptInitMean = 3,
+                                       betaInterceptInitSD = .1,
+                                       betaLambdaInitMean = 3,
+                                       betaLambdaInitSD = .1,
+                                       varInterceptInitMean = 3,
+                                       varInterceptInitSD = .1,
+                                       varLambdaInitMean = 3,
+                                       varLambdaInitSD = .1,
                                        varHyperParaA = varHyperParaA,
                                        varHyperParaB = varHyperParaB,
-                                       varInterceptMean = 3,
-                                       varInterceptSD = .1,
-                                       varLambdaMean = 3,
-                                       varLambdaSD = .1,
                                        seed = .Random.seed[1])
 
 
@@ -482,23 +482,23 @@ print(calibration)
 
 
 
-  # i= 1
-  # testDraw = adaptiveSimulation(nProfiles = nProfiles,
-  #                               abilityQ = simDataList$simAbilityQ,
-  #                               itemcovs = simDataList$simItemCovs,
-  #                               nItems = nItems,
-  #                               profileMatrix= profileMatrix,
-  #                               startingProfileProbablity = currentProfileProbablity,
-  #                               itemPool = itemPool,
-  #                               trueParameters = trueParameters,
-  #                               trueProfiles = trueProfiles[i],
-  #                               itemProbArray= itemProbArray,
-  #                               maxItems = simulationSpecs$maxItems,
-  #                               itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-  #                               itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-  #                               nItemSamples = simulationSpecs$nItemSamples,
-  #                               stopCriterion = simulationSpecs$stopCriterion,
-  #                               calculateSHE = simulationSpecs$calculateSHE)
+  i= 1
+  testDraw = adaptiveSimulation(nProfiles = nProfiles,
+                                abilityQ = simDataList$simAbilityQ,
+                                itemcovs = simDataList$simItemCovs,
+                                nItems = nItems,
+                                profileMatrix= profileMatrix,
+                                startingProfileProbablity = currentProfileProbablity,
+                                itemPool = itemPool,
+                                trueParameters = trueParameters,
+                                trueProfiles = trueProfiles[i],
+                                itemProbArray= itemProbArray,
+                                maxItems = simulationSpecs$maxItems,
+                                itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+                                itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+                                nItemSamples = simulationSpecs$nItemSamples,
+                                stopCriterion = simulationSpecs$stopCriterion,
+                                calculateSHE = simulationSpecs$calculateSHE)
 
 
    # result = NULL

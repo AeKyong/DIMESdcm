@@ -20,7 +20,7 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
 
   print(itemNum)
   itemNum = itemNum +1
-
+browser()
 
   # select next item based on SHE algorithm
   selectedItem = selectNewItem(
@@ -89,7 +89,7 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
         currentProfileProbablity[1:nItemSamples, profile] *
         currentItemProbArray[1:nItemSamples, profile, responseVector[length(responseVector)]+1]
     }
-    currentProfileProbablity = apply(currentProfileProbablity, 2, mean)
+    currentProfileProbablity = apply(currentProfileProbablity, 2, mean, na.rm = TRUE)
   }
 
    currentProfileProbablity = currentProfileProbablity/sum(currentProfileProbablity)
