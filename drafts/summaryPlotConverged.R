@@ -14,14 +14,12 @@ nReplicationsPerCondition = 5
 repFiles = paste0("rep_", 1:(0+nCondition*nReplicationsPerCondition),".RData")
 
 
-# check incomplete files
-total = c(1:480)
-completeFiles = as.numeric(gsub("\\D", '', repFiles))
-incompleteFiles = total[which(!total %in% completeFiles)]
+# # check incomplete files
+# total = c(1:480)
+# completeFiles = as.numeric(gsub("\\D", '', repFiles))
+# incompleteFiles = total[which(!total %in% completeFiles)]
 
 
-# calculate measurement accuracy =================================================
-# calculate bias, rmse, exposure rate, profile recovery rate (list by arrayNumber)
 nAttributes = 3
 nProfiles = 2^nAttributes
 
@@ -34,6 +32,9 @@ for (i in 0:(nProfiles - 1)){
 }
 
 
+
+
+# calculate measurement accuracy =================================================
 results = list()
 for (file in 1:length(repFiles)){
 
@@ -181,190 +182,41 @@ for (file in 1:length(repFiles)){
 
 }
 
-betaInterceptBiasL = NULL
-betaLambdaBiasL = NULL
-varInterceptBiasL = NULL
-varLambdaBiasL = NULL
-
-betaInterceptRmseL = NULL
-betaLambdaRmseL = NULL
-varInterceptRmseL = NULL
-varLambdaRmseL = NULL
-
-exposureRateL = NULL
-exposureChisquareL = NULL
-profileRecoveryL = NULL
-attributeRecoveryL = NULL
-
-nUnconverged = NULL
-for (arrayNumber in 1:length(repFiles)){
-
-  conditionN = ceiling(arrayNumber/nReplicationsPerCondition)
-  replicationN = arrayNumber %% nReplicationsPerCondition
-  replicationN[which(replicationN %in% 0)] = nReplicationsPerCondition
-
-  # Bias =======================
-  betaInterceptB = cbind(results[[arrayNumber]]$betaInterceptBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  betaLambdaB = cbind(results[[arrayNumber]]$betaLambdaBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varInterceptB = cbind(results[[arrayNumber]]$varInterceptBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varLambdaB = cbind(results[[arrayNumber]]$varLambdaBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  # Bias long data
-  betaInterceptBiasL = rbind(betaInterceptBiasL, betaInterceptB)
-  betaLambdaBiasL = rbind(betaLambdaBiasL, betaLambdaB)
-  varInterceptBiasL = rbind(varInterceptBiasL, varInterceptB)
-  varLambdaBiasL = rbind(varLambdaBiasL, varLambdaB)
 
 
-  # Rmse =======================
-  betaInterceptR = cbind(results[[arrayNumber]]$betaInterceptRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  betaLambdaR = cbind(results[[arrayNumber]]$betaLambdaRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varInterceptR = cbind(results[[arrayNumber]]$varInterceptRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varLambdaR = cbind(results[[arrayNumber]]$varLambdaRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
+# transform results in a long format============================================
+resultsLong= NULL
+for (arrayNumber in 1:length(results)){
 
-  # Rmse long data
-  betaInterceptRmseL = rbind(betaInterceptRmseL, betaInterceptR)
-  betaLambdaRmseL = rbind(betaLambdaRmseL, betaLambdaR)
-  varInterceptRmseL = rbind(varInterceptRmseL, varInterceptR)
-  varLambdaRmseL = rbind(varLambdaRmseL, varLambdaR)
+    result = results[[arrayNumber]]
+    conditionN = ceiling(arrayNumber/nReplicationsPerCondition)
+    replicationN = arrayNumber %% nReplicationsPerCondition
+    replicationN[which(replicationN %in% 0)] = nReplicationsPerCondition
+    calibrationN = as.numeric(rownames(result))
 
-
-  # exposure rate ==============
-  expMean = cbind(results[[arrayNumber]]$exposureRateMean, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  expChisquare = cbind(results[[arrayNumber]]$chiSquare, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  # exposure rate long data
-  exposureRateL = rbind(exposureRateL, expMean)
-  exposureChisquareL = rbind(exposureChisquareL, expChisquare)
-
-
-
-  # Recovery Rate ==============
-  profileR = cbind(results[[arrayNumber]]$profileRecoveryRate, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  attributeR = cbind(results[[arrayNumber]]$attributeRecoveryRate, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  profileRecoveryL = rbind(profileRecoveryL, profileR)
-  attributeRecoveryL = rbind(attributeRecoveryL, attributeR)
-
-
-  # not converged ==============
-  nUnconverged[arrayNumber] =  sum(results[[arrayNumber]]$unconvg)
-
+    result = cbind(result, conditionN, replicationN, arrayNumber, calibrationN)
+    resultsLong = rbind(resultsLong, result)
 }
 
-sum(nUnconverged[(1:160)])/(160*40)   #pilot sample 30: 0.1275(40 itempool)  0.1515625(150 itempool)
-sum(nUnconverged[(161:320)])/(160*40) #pilot sample 300: 0.2492187(40 itempool) 0.05921875(150 itempool)
-sum(nUnconverged[(321:480)])/(160*40) #pilot sample 2000: 0.4578125
 
 
-# change to data frame
-betaInterceptBiasL = as.data.frame(betaInterceptBiasL)
-betaLambdaBiasL  = as.data.frame(betaLambdaBiasL)
-varInterceptBiasL  = as.data.frame(varInterceptBiasL)
-varLambdaBiasL   = as.data.frame(varLambdaBiasL)
+# separate long format by criteria =============================================
+criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias",
+                 "betaInterceptRMSE", "betaLambdaRMSE", "varInterceptRMSE", "varLambdaRMSE",
+                 "exposureRateMean", "chiSquare", "profileRecoveryRate", "attributeRecoveryRate")
 
-betaInterceptRmseL = as.data.frame(betaInterceptRmseL)
-betaLambdaRmseL   = as.data.frame(betaLambdaRmseL)
-varInterceptRmseL  = as.data.frame(varInterceptRmseL)
-varLambdaRmseL   = as.data.frame(varLambdaRmseL)
+criteria = list()
+for (i in 1:length(criteriaName)){
+  criterion = resultsLong[,c(criteriaName[i],"conditionN","replicationN","arrayNumber","calibrationN")]
+  colnames(criterion) = c("value","conditionN","replicationN","arrayNumber","calibrationN")
 
-exposureRateL  = as.data.frame(exposureRateL)
-exposureChisquareL   = as.data.frame(exposureChisquareL)
-profileRecoveryL  = as.data.frame(profileRecoveryL)
-attributeRecoveryL   = as.data.frame(attributeRecoveryL)
-
-
-colnames(betaInterceptBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(betaLambdaBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varInterceptBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varLambdaBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-colnames(betaInterceptRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(betaLambdaRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varInterceptRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varLambdaRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-colnames(exposureRateL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(exposureChisquareL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(profileRecoveryL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(attributeRecoveryL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-
-# draw plots & get summary statistics ===================================================================
-criteria = list(betaInterceptBiasL, betaLambdaBiasL, varInterceptBiasL, varLambdaBiasL, betaInterceptRmseL ,betaLambdaRmseL,
-                varInterceptRmseL, varLambdaRmseL, exposureRateL, exposureChisquareL, profileRecoveryL, attributeRecoveryL)
-criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias", "betaInterceptRmse", "betaLambdaRmse",
-                 "varInterceptRmse", "varLambdaRmse", "exposureRate", "exposureChisquare", "profileRecovery", "attributeRecovery")
-
-# pdf("plots.pdf")
-# descriptiveStatistics = NULL
-# for (cri in 1:length(criteria)) {
-#
-#   # choose one criterion among criteriaN
-#   criterion = criteria[[cri]]
-#
-#   for (condition in 1:nCondition) {
-#
-#     # choose one condition in the criteria
-#     criterionCond = criterion[which(criterion$conditionN == condition),]
-#
-#
-#
-#     if (cri %in% c(4, 8)){
-#       # varLambda bias, rmse
-#       boxplot(value ~ calibrationN,
-#               data = criterionCond,
-#               xlab = "# of Calibration",
-#               ylab = criteriaName[cri],
-#               ylim = c(0, 12),
-#               main = paste0("condition", condition)
-#       )
-#     } else if (cri %in% c(10)){
-#       # exposure chi square
-#       boxplot(value ~ calibrationN,
-#               data = criterionCond,
-#               xlab = "# of Calibration",
-#               ylab = criteriaName[cri],
-#               ylim = c(0, 30),
-#               main = paste0("condition", condition)
-#       )
-#     } else {
-#       # draw a box plot
-#       boxplot(value ~ calibrationN,
-#               data = criterionCond,
-#               xlab = "# of Calibration",
-#               ylab = criteriaName[cri],
-#               ylim  = c(0, 1),
-#               main = paste0("condition", condition)
-#       )
-#     }
-#
-#
-#
-#     # # summary statistics
-#     # for (nCalibration in 1:max(criterionCond$calibrationN)){
-#     #
-#     #   # choose one calibration
-#     #   caliN = criterionCond[criterionCond$calibrationN==nCalibration,]
-#     #   quan = as.data.frame(t(quantile(caliN$value)))
-#     #   quan$mean = mean(caliN$value)
-#     #   quan$sd = sd(caliN$value)
-#     #   quan$variable = criteriaName[cri]
-#     #   quan$conditionN = condition
-#     #   quan$calibrationN = nCalibration
-#     #
-#     #   descriptiveStatistics = rbind(descriptiveStatistics, quan)
-#     #
-#     # }
-#   }
-# }
-#
-# dev.off()
+  criteria[[i]] = as.data.frame(criterion)
+}
 
 
 
 
-# Summary Statistics by Factors ==============================================
+
 # create conditions list
 conditions = list(
   nItemsInPool = c(40, 105),
@@ -400,16 +252,18 @@ for (cond in 1:nConditions){
   ) + 1
 }
 
+
+
+
 # Function for summarizing results by factor ===================================
+summaryByFactor = function (criterion, conditionsMatrix) {
 
-summaryByFactor = function (criteria, conditionsMatrix) {
-
-  criteria = as.data.frame(criteria)
+  criterion = as.data.frame(criterion)
   statistics = NULL
   for (calibrationN in 1:40) {
-    nCalibration = criteria[which(criteria$calibrationN == calibrationN), c("value","conditionN","arrayNumber","calibrationN")]
+    nCalibration = criterion[which(criterion$calibrationN == calibrationN), c("value","conditionN")]
 
-    # stop criteria
+    # stop criterion
     stop1 = which(conditionsMatrix[,"stopCriterion"] == 1)
     stop2 = which(conditionsMatrix[,"stopCriterion"] == 2)
     stop1.mean = mean(nCalibration[which(nCalibration$conditionN %in% stop1),"value"], na.rm=T)
@@ -463,17 +317,17 @@ summaryByFactor = function (criteria, conditionsMatrix) {
 }
 
 # Functions for plotting by factor =============================================
-plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
-# browser()
+plotByFactor = function(criterion, criterionName, conditionsMatrix) {
+
   # get statistics by factor
-  statistics = summaryByFactor(criteria = criteria, conditionsMatrix = conditionsMatrix)
+  statistics = summaryByFactor(criterion = criterion, conditionsMatrix = conditionsMatrix)
 
   par(mfrow = c(2,3))
   # stop criteria =======================
   stop = statistics[,c("stop1.mean","stop2.mean")]
   matplot(stop,
           type="l",
-          ylab=criteriaName,
+          ylab=criterionName,
           main="Stop Criteria",
           col=1:2,
           lty=1
@@ -490,7 +344,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   summary = statistics[,c("summary1.mean","summary2.mean","summary3.mean","summary4.mean")]
   matplot(summary,
           type="l",
-          ylab=criteriaName,
+          ylab=criterionName,
           main="Item Summary Function",
           col=1:4,
           lty=1
@@ -507,7 +361,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   update = statistics[,c("update1.mean","update2.mean","update3.mean","update4.mean")]
   matplot(update,
           type="l",
-          ylab=criteriaName,
+          ylab=criterionName,
           main="Item Selction Function",
           col=1:4,
           lty=1
@@ -524,7 +378,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   size = statistics[,c("size1.mean","size2.mean","size3.mean")]
   matplot(size,
           type="l",
-          ylab=criteriaName,
+          ylab=criterionName,
           main="Pilot Sample Size",
           col=1:3,
           lty=1
@@ -541,7 +395,7 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
   pool = statistics[,c("pool1.mean","pool2.mean")]
   matplot(pool,
           type="l",
-          ylab=criteriaName,
+          ylab=criterionName,
           main="Item Pool Size",
           col=1:2,
           lty=1
@@ -555,11 +409,15 @@ plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
 
 }
 
-pdf("plotsByFactor.pdf")
+
+
+pdf("plots.pdf")
 for (i in 1:length(criteria)){
-  plotByFactor(criteria = criteria[i],criteriaName = criteriaName[i], conditionsMatrix=conditionsMatrix)
+  plotByFactor(criterion = criteria[i],criterionName = criteriaName[i], conditionsMatrix=conditionsMatrix)
 }
 dev.off()
+
+
 
 
 
