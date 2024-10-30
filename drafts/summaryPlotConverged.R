@@ -5,7 +5,7 @@ setwd("drafts/result")
 
 # list files in directory
 directoryFiles = dir()
-nCondition = 160
+nCondition = 192
 nReplicationsPerCondition = 5
 
 
@@ -14,10 +14,10 @@ nReplicationsPerCondition = 5
 repFiles = paste0("rep_", 1:(0+nCondition*nReplicationsPerCondition),".RData")
 
 
-# # check incomplete files
-# total = c(1:480)
-# completeFiles = as.numeric(gsub("\\D", '', repFiles))
-# incompleteFiles = total[which(!total %in% completeFiles)]
+# check incomplete files
+total = c(1:960)
+completeFiles = as.numeric(gsub("\\D", '', repFiles))
+incompleteFiles = total[which(!total %in% completeFiles)]
 
 
 nAttributes = 3
@@ -38,147 +38,152 @@ for (i in 0:(nProfiles - 1)){
 results = list()
 for (file in 1:length(repFiles)){
 
-
   fileName = repFiles[[file]]
-  # fileName = repFiles[grep(paste0("rep_", file, ".RData"), repFiles)]
-  load(file = fileName)
+
+  if (any(directoryFiles %in% fileName)){
+    load(file = fileName)
+
+    # get the number of calibration
+    calibrationF = as.factor(estimatedParameters$calibration)
+    calibration = as.numeric(levels(calibrationF))
+
+    # extract nStudents
+    nStudents = nrow(simDataList$simData)
+
+    # extract runningData except simulated response
+    running = runningData[(nStudents+1):nrow(runningData), ]
+
+    # extract nNewStudents
+    nNewStudents =  max(estimatedProfileProbability[,"student"])
+
+
+    betaInterceptBias = NULL
+    betaLambdaBias = NULL
+    varInterceptBias = NULL
+    varLambdaBias = NULL
+    betaInterceptRMSE = NULL
+    betaLambdaRMSE = NULL
+    varInterceptRMSE = NULL
+    varLambdaRMSE = NULL
+    exposure = NULL
+    exposureRateMean = NULL
+    # exposureRateMax = NULL
+    # unUsedItemN = NULL
+    chiSquare = NULL
+    profileRecoveryRate = NULL
+    attributeRecoveryRate = NULL
+    unconvg = NULL
+    for (nCalibration in 1:length(calibration)) {
+
+
+      # extract assigned estimatedParameter data with nCalibration
+      dat = estimatedParameters[which(estimatedParameters$calibration == nCalibration), ]
+
+      # grep a parameter row
+      betaInterceptRow = grep("^beta_intercept\\[", dat$parameter)
+      betaLambdaRow = grep("^beta_lambda\\[", dat$parameter)
+      varInterceptRow = grep("^var_intercept", dat$parameter)
+      varLambdaRow = grep("^var_lambda", dat$parameter)
 
 
 
-  # get the number of calibration
-  calibrationF = as.factor(estimatedParameters$calibration)
-  calibration = as.numeric(levels(calibrationF))
+      # BIAS and RMSE ============================================================
+      # get deviation: eap - trueValues
+      deviation = dat$eap- dat$trueValues
 
-  # extract nStudents
-  nStudents = nrow(simDataList$simData)
+      # # get bias
+      # betaInterceptBias[nCalibration] = mean(deviation[betaInterceptRow])
+      # betaLambdaBias[nCalibration] = mean(deviation[betaLambdaRow])
+      # varInterceptBias[nCalibration] = mean(deviation[varInterceptRow])
+      # varLambdaBias[nCalibration] = mean(deviation[varLambdaRow])
 
-  # extract runningData except simulated response
-  running = runningData[(nStudents+1):nrow(runningData), ]
+      # get absolute bias
+      betaInterceptBias[nCalibration] = mean(abs(deviation[betaInterceptRow]))
+      betaLambdaBias[nCalibration] = mean(abs(deviation[betaLambdaRow]))
+      varInterceptBias[nCalibration] = mean(abs(deviation[varInterceptRow]))
+      varLambdaBias[nCalibration] = mean(abs(deviation[varLambdaRow]))
 
-  # extract nNewStudents
-  nNewStudents =  max(estimatedProfileProbability[,"student"])
-
-
-  betaInterceptBias = NULL
-  betaLambdaBias = NULL
-  varInterceptBias = NULL
-  varLambdaBias = NULL
-  betaInterceptRMSE = NULL
-  betaLambdaRMSE = NULL
-  varInterceptRMSE = NULL
-  varLambdaRMSE = NULL
-  exposure = NULL
-  exposureRateMean = NULL
-  # exposureRateMax = NULL
-  # unUsedItemN = NULL
-  chiSquare = NULL
-  profileRecoveryRate = NULL
-  attributeRecoveryRate = NULL
-  unconvg = NULL
-  for (nCalibration in 1:length(calibration)) {
-
-
-    # extract assigned estimatedParameter data with nCalibration
-    dat = estimatedParameters[which(estimatedParameters$calibration == nCalibration), ]
-
-    # grep a parameter row
-    betaInterceptRow = grep("^beta_intercept\\[", dat$parameter)
-    betaLambdaRow = grep("^beta_lambda\\[", dat$parameter)
-    varInterceptRow = grep("^var_intercept", dat$parameter)
-    varLambdaRow = grep("^var_lambda", dat$parameter)
-
-
-
-    # BIAS and RMSE ============================================================
-    # get deviation: eap - trueValues
-    deviation = dat$eap- dat$trueValues
-
-    # # get bias
-    # betaInterceptBias[nCalibration] = mean(deviation[betaInterceptRow])
-    # betaLambdaBias[nCalibration] = mean(deviation[betaLambdaRow])
-    # varInterceptBias[nCalibration] = mean(deviation[varInterceptRow])
-    # varLambdaBias[nCalibration] = mean(deviation[varLambdaRow])
-
-    # get absolute bias
-    betaInterceptBias[nCalibration] = mean(abs(deviation[betaInterceptRow]))
-    betaLambdaBias[nCalibration] = mean(abs(deviation[betaLambdaRow]))
-    varInterceptBias[nCalibration] = mean(abs(deviation[varInterceptRow]))
-    varLambdaBias[nCalibration] = mean(abs(deviation[varLambdaRow]))
-
-    # get rmse
-    betaInterceptRMSE[nCalibration] = sqrt(mean(deviation[betaInterceptRow]^2))
-    betaLambdaRMSE[nCalibration] = sqrt(mean(deviation[betaLambdaRow]^2))
-    varInterceptRMSE[nCalibration] = sqrt(mean(deviation[varInterceptRow]^2))
-    varLambdaRMSE[nCalibration] = sqrt(mean(deviation[varLambdaRow]^2))
+      # get rmse
+      betaInterceptRMSE[nCalibration] = sqrt(mean(deviation[betaInterceptRow]^2))
+      betaLambdaRMSE[nCalibration] = sqrt(mean(deviation[betaLambdaRow]^2))
+      varInterceptRMSE[nCalibration] = sqrt(mean(deviation[varInterceptRow]^2))
+      varLambdaRMSE[nCalibration] = sqrt(mean(deviation[varLambdaRow]^2))
 
 
 
 
-    # Exposure Rate ============================================================
-    first = nNewStudents * (nCalibration-1) + 1
-    last = nNewStudents * nCalibration
+      # Exposure Rate ============================================================
+      first = nNewStudents * (nCalibration-1) + 1
+      last = nNewStudents * nCalibration
 
-    # extract response data for the nCalibration
-    response = running[first:last, ]
+      # extract response data for the nCalibration
+      response = running[first:last, ]
 
-    # get exposure rate
-    expRate = colSums(!is.na(response))/nNewStudents
-    expRateMean = mean(expRate)
+      # get exposure rate
+      expRate = colSums(!is.na(response))/nNewStudents
+      expRateMean = mean(expRate)
 
-    exposureRateMean[nCalibration] = expRateMean
-    # exposureRateMax[nCalibration] = max(expRate)
-    # unUsedItemN[nCalibration] = length(which(expRate == 0))
-    chiSquare[nCalibration] = sum((expRate - expRateMean)^2/expRateMean) # Lin & Chang (2019)
-
-
-
-    # Recovery Rate =============================================
-    profiles = estimatedProfileProbability[which(estimatedProfileProbability$calibration == nCalibration), ]
-
-    # 1. profile recovery rate
-    nSame = length(which(profiles$profile == profiles$trueProfile))
-    profileRecoveryRate[nCalibration] = nSame/nNewStudents
+      exposureRateMean[nCalibration] = expRateMean
+      # exposureRateMax[nCalibration] = max(expRate)
+      # unUsedItemN[nCalibration] = length(which(expRate == 0))
+      chiSquare[nCalibration] = sum((expRate - expRateMean)^2/expRateMean) # Lin & Chang (2019)
 
 
-    # 2. attribute pattern recovery rate
-    estimatedPattern = profileMatrix[profiles$profile,]
-    truePattern = profileMatrix[profiles$trueProfile,]
 
-    nSamePattern = matrix(NA, ncol= ncol(estimatedPattern), nrow = nrow(estimatedPattern))
-    for (i in 1:ncol(estimatedPattern)){
-      nSamePattern[,i] = estimatedPattern[,i] - truePattern[,i]
+      # Recovery Rate =============================================
+      profiles = estimatedProfileProbability[which(estimatedProfileProbability$calibration == nCalibration), ]
+
+      # 1. profile recovery rate
+      nSame = length(which(profiles$profile == profiles$trueProfile))
+      profileRecoveryRate[nCalibration] = nSame/nNewStudents
+
+
+      # 2. attribute pattern recovery rate
+      estimatedPattern = profileMatrix[profiles$profile,]
+      truePattern = profileMatrix[profiles$trueProfile,]
+
+      nSamePattern = matrix(NA, ncol= ncol(estimatedPattern), nrow = nrow(estimatedPattern))
+      for (i in 1:ncol(estimatedPattern)){
+        nSamePattern[,i] = estimatedPattern[,i] - truePattern[,i]
+      }
+
+      nSameAttribute = length(which(nSamePattern == 0))
+      attributeRecoveryRate[nCalibration] = nSameAttribute / length(nSamePattern)
+
+
+
+      # maxRhat ===================================================
+      if(calibrationData[[nCalibration]]$maxRhat>1.1){
+        unconvg[nCalibration] = 1
+      }else{
+        unconvg[nCalibration] = 0
+      }
+
     }
 
-    nSameAttribute = length(which(nSamePattern == 0))
-    attributeRecoveryRate[nCalibration] = nSameAttribute / length(nSamePattern)
 
+    resultsDF = data.frame(betaInterceptBias = betaInterceptBias, betaLambdaBias = betaLambdaBias,
+                           varInterceptBias = varInterceptBias, varLambdaBias = varLambdaBias,
+                           betaInterceptRMSE = betaInterceptRMSE, betaLambdaRMSE = betaLambdaRMSE,
+                           varInterceptRMSE = varInterceptRMSE, varLambdaRMSE = varLambdaRMSE,
+                           exposureRateMean = exposureRateMean,  chiSquare = chiSquare,
+                           # unUsedItemN = unUsedItemN,exposureRateMax = exposureRateMax,
+                           profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate,
+                           unconvg = unconvg)
 
+    # remove value of unconverged calibration
+    resultsDfconvg = resultsDF
+    resultsDfconvg[which(resultsDF$unconvg == 1), !colnames(resultsDF) %in% c("unconvg")] = NA
 
-    # maxRhat ===================================================
-    if(calibrationData[[nCalibration]]$maxRhat>1.1){
-      unconvg[nCalibration] = 1
-    }else{
-      unconvg[nCalibration] = 0
-    }
+    results[[file]] = resultsDfconvg
 
+  }else{
+   result = as.data.frame(matrix(NA, nrow=40, ncol=13))
+   names(result) = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias",
+                     "betaInterceptRMSE", "betaLambdaRMSE", "varInterceptRMSE", "varLambdaRMSE",
+                     "exposureRateMean", "chiSquare", "profileRecoveryRate", "attributeRecoveryRate","unconvg")
+    results[[file]] = result
   }
-
-
-  resultsDF = data.frame(betaInterceptBias = betaInterceptBias, betaLambdaBias = betaLambdaBias,
-                varInterceptBias = varInterceptBias, varLambdaBias = varLambdaBias,
-                betaInterceptRMSE = betaInterceptRMSE, betaLambdaRMSE = betaLambdaRMSE,
-                varInterceptRMSE = varInterceptRMSE, varLambdaRMSE = varLambdaRMSE,
-                exposureRateMean = exposureRateMean,  chiSquare = chiSquare,
-                # unUsedItemN = unUsedItemN,exposureRateMax = exposureRateMax,
-                profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate,
-                unconvg = unconvg)
-
-  resultsDfconvg = resultsDF
-
-  # remove value of unconverged calibration
-  resultsDfconvg[which(resultsDF$unconvg == 1), !colnames(resultsDF) %in% c("unconvg")] = NA
-
-  results[[file]] = resultsDfconvg
 
 }
 
@@ -318,7 +323,7 @@ summaryByFactor = function (criterion, conditionsMatrix) {
 
 # Functions for plotting by factor =============================================
 plotByFactor = function(criterion, criterionName, conditionsMatrix) {
-
+# browser()
   # get statistics by factor
   statistics = summaryByFactor(criterion = criterion, conditionsMatrix = conditionsMatrix)
 
