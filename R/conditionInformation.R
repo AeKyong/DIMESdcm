@@ -96,7 +96,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   if (nItemsInPool < 105){
     maxItems = 40
   } else if (nItemsInPool >= 105) {
-    maxItems = 50
+    maxItems = 40
   }
 
 

@@ -75,11 +75,9 @@ browser()
 
   # update current profile probability
   if (nItemSamples ==1) {
-    for (profile in 1:nProfiles){
-      currentProfileProbablity[profile] =
-        currentProfileProbablity[profile] *
-        currentItemProbArray[dim(currentItemProbArray)[1], profile, responseVector[length(responseVector)]+1]
-    }
+   currentProfileProbablity =
+     currentProfileProbablity*
+     currentItemProbArray[dim(currentItemProbArray)[1], , responseVector[length(responseVector)]+1]
   } else {
     # replicate currentProfileProbability nItemSamples times
     currentProfileProbablity = matrix(replicate(nItemSamples,currentProfileProbablity), nrow = nItemSamples, byrow = TRUE)
