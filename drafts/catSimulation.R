@@ -1,5 +1,7 @@
 rm(list = ls())
 devtools::load_all(".")
+
+# install.packages("modeest", repos = "http://cran.us.r-project.org",lib = "/Users/aekjung/DIMESdcm/Rlibs")
 library(DIMESdcm)
 library(parallel)
 library(R2jags)
@@ -11,9 +13,11 @@ library(readxl)
 library(bayesplot)
 library(extraDistr)
 library(modeest)
+# library(modeest, lib.loc = "/Users/aekjung/DIMESdcm/Rlibs")
+
 # grab command line arguments
 # arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
-arrayNumber = 3
+arrayNumber = 129
 
 set.seed(arrayNumber)
 
@@ -225,27 +229,28 @@ runningData = simDataList$simData
 itemcovs = simDataList$simItemCovs
 abilityQ = simDataList$simAbilityQ
 estimatedParameters = NULL
-estimatedProfileProbability= NULL
+estimatedProfileProbability = NULL
 simItemParameterChains = NULL
 nStartingStudents = nrow(simDataList$simData)
 
 
 # prior for var_intercept and var_lambda ~ logNormal(A,B)
-if (nStartingStudents == 30){
-  varHyperParaAfirst = -0.5
-  varHyperParaBfirst = 0.1
+# if (nStartingStudents == 30){
+  varPriorParaAfirst = -0.5
+  varPriorParaBfirst = 0.1
 
-  } else if (nStartingStudents == 300) {
-    varHyperParaAfirst = -0.5
-    varHyperParaBfirst = 1.9
-
-  } else if (nStartingStudents == 2000){
-    varHyperParaAfirst = -0.5
-    varHyperParaBfirst = 13.1
-}
+#   } else if (nStartingStudents == 300) {
+#     varPriorParaAfirst = -0.5
+#     varPriorParaBfirst = 1.9
+#
+#   } else if (nStartingStudents == 2000){
+#     varPriorParaAfirst = -0.5
+#     varPriorParaBfirst = 13.1
+# }
 
 
 # start while loop =============================================================
+calibration=1
 while (calibration <= simulationSpecs$nCalibrations){
 print(calibration)
 
@@ -254,20 +259,20 @@ print(calibration)
 
 
   # increase in SD of prior distribution with the increase in the number of students
-  if (nStartingStudents == 30){
+  # if (nStartingStudents == 30){
     # increase the variance of the prior distribution after each calibration
-    varHyperParaA = varHyperParaAfirst
-    varHyperParaB = varHyperParaBfirst + 0.2*(calibration-1)
+    varPriorParaA = varPriorParaAfirst
+    varPriorParaB = varPriorParaBfirst + 0.2*(calibration-1)
 
-  } else if (nStartingStudents == 300){
-    varHyperParaA = varHyperParaAfirst
-    varHyperParaB = varHyperParaBfirst + 0.2*(calibration-1)
-
-  } else if (nStartingStudents == 2000){
-    varHyperParaA = varHyperParaAfirst
-    varHyperParaB = varHyperParaBfirst
-
-  }
+  # } else if (nStartingStudents == 300){
+  #   varPriorParaA = varPriorParaAfirst
+  #   varPriorParaB = varPriorParaBfirst + 0.2*(calibration-1)
+  #
+  # } else if (nStartingStudents == 2000){
+  #   varPriorParaA = varPriorParaAfirst
+  #   varPriorParaB = varPriorParaBfirst
+  #
+  # }
 
 
 
@@ -282,8 +287,8 @@ print(calibration)
                                        varInterceptInitSD = .1,
                                        varLambdaInitMean = 3,
                                        varLambdaInitSD = .1,
-                                       varHyperParaA = varHyperParaA,
-                                       varHyperParaB = varHyperParaB,
+                                       varPriorParaA = varPriorParaA,
+                                       varPriorParaB = varPriorParaB,
                                        seed = .Random.seed[1])
 
 
@@ -461,6 +466,7 @@ print(calibration)
   nSamples = nrow(interceptPosterior)
   itemProbArray = array(data = NA, dim = c(nSamples, nProfiles, 2, nItems), dimnames = list(c(paste0("draw", 1:nSamples)), c(paste0("profile", 1:nProfiles)),
                                                                                             c(paste0("resp", 0:1)),c(paste0("[", 1:nItems, "]"))))
+
   # create item response probability array for each item, class, and response
   for (item in 1:nItems){
     for(sample in 1:nSamples) {
@@ -468,7 +474,6 @@ print(calibration)
         for (response in 0:1){
           itemProbArray[sample, profile, (response+1), item] = itemProb(
             response = response,
-            itemNumber = itemPool[item],
             itemAttribute = abilityQ[item,],
             examineeProfile = profileMatrix[profile,],
             itemIntercepts = interceptPosterior[sample, item],
@@ -482,23 +487,24 @@ print(calibration)
 
 
 
-  i= 1
-  testDraw = adaptiveSimulation(nProfiles = nProfiles,
-                                abilityQ = simDataList$simAbilityQ,
-                                itemcovs = simDataList$simItemCovs,
-                                nItems = nItems,
-                                profileMatrix= profileMatrix,
-                                startingProfileProbablity = currentProfileProbablity,
-                                itemPool = itemPool,
-                                trueParameters = trueParameters,
-                                trueProfiles = trueProfiles[i],
-                                itemProbArray= itemProbArray,
-                                maxItems = simulationSpecs$maxItems,
-                                itemUpdateFunction = simulationSpecs$itemUpdateFunction,
-                                itemSummaryFunction = simulationSpecs$itemSummaryFunction,
-                                nItemSamples = simulationSpecs$nItemSamples,
-                                stopCriterion = simulationSpecs$stopCriterion,
-                                calculateSHE = simulationSpecs$calculateSHE)
+  # i= 1
+  # testDraw = adaptiveSimulation(nProfiles = nProfiles,
+  #                               abilityQ = simDataList$simAbilityQ,
+  #                               itemcovs = simDataList$simItemCovs,
+  #                               nItems = nItems,
+  #                               profileMatrix= profileMatrix,
+  #                               startingProfileProbablity = currentProfileProbablity,
+  #                               itemPool = itemPool,
+  #                               trueParameters = trueParameters,
+  #                               trueProfiles = trueProfiles[i],
+  #                               itemProbArray= itemProbArray,
+  #                               maxItems = simulationSpecs$maxItems,
+  #                               itemUpdateFunction = simulationSpecs$itemUpdateFunction,
+  #                               itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+  #                               nItemSamples = simulationSpecs$nItemSamples,
+  #                               nUpdateSamples = simulationSpecs$nUpdateSamples,
+  #                               stopCriterion = simulationSpecs$stopCriterion,
+  #                               calculateSHE = simulationSpecs$calculateSHE)
 
 
    # result = NULL
@@ -518,6 +524,7 @@ print(calibration)
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
    #                                          nItemSamples = simulationSpecs$nItemSamples,
+   #                                          nUpdateSamples = simulationSpecs$nUpdateSamples,
    #                                          stopCriterion = simulationSpecs$stopCriterion,
    #                                          calculateSHE = simulationSpecs$calculateSHE)
    #
@@ -537,6 +544,7 @@ print(calibration)
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
    #                                          nItemSamples = simulationSpecs$nItemSamples,
+   #                                          nUpdateSamples = simulationSpecs$nUpdateSamples,
    #                                          stopCriterion = simulationSpecs$stopCriterion,
    #                                          calculateSHE = simulationSpecs$calculateSHE)
    #
@@ -556,6 +564,7 @@ print(calibration)
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
    #                                          nItemSamples = simulationSpecs$nItemSamples,
+   #                                          nUpdateSamples = simulationSpecs$nUpdateSamples,
    #                                          stopCriterion = simulationSpecs$stopCriterion,
    #                                          calculateSHE = simulationSpecs$calculateSHE)
    #
@@ -575,6 +584,7 @@ print(calibration)
    #                                          itemUpdateFunction = simulationSpecs$itemUpdateFunction,
    #                                          itemSummaryFunction = simulationSpecs$itemSummaryFunction,
    #                                          nItemSamples = simulationSpecs$nItemSamples,
+   #                                          nUpdateSamples = simulationSpecs$nUpdateSamples,
    #                                          stopCriterion = simulationSpecs$stopCriterion,
    #                                          calculateSHE = simulationSpecs$calculateSHE)
 
@@ -620,6 +630,8 @@ print(calibration)
      itemProbArray = itemProbArray,
      itemUpdateFunction = simulationSpecs$itemUpdateFunction,
      itemSummaryFunction = simulationSpecs$itemSummaryFunction,
+     nItemSamples = simulationSpecs$nItemSamples,
+     nUpdateSamples = simulationSpecs$nUpdateSamples,
      stopCriterion = simulationSpecs$stopCriterion,
      calculateSHE = simulationSpecs$calculateSHE
    )
@@ -650,16 +662,4 @@ print(calibration)
 }
 
 save(estimatedParameters, estimatedProfileProbability, runningData, calibrationData, simDataList, file= paste0("rep_", arrayNumber,".RData"))
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -1,6 +1,6 @@
 adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatrix, startingProfileProbablity, itemPool,
                               trueParameters, trueProfiles, itemProbArray,
-                              maxItems, itemUpdateFunction, itemSummaryFunction, nItemSamples, stopCriterion, calculateSHE){
+                              maxItems, itemUpdateFunction, itemSummaryFunction, nUpdateSamples, nItemSamples, stopCriterion, calculateSHE){
 
 
   responseVector = NULL
@@ -31,7 +31,8 @@ browser()
     itemAbilityQ = poolQ,
     nProfiles = nProfiles,
     itemUpdateFunction = itemUpdateFunction,
-    calculateSHE = calculateSHE
+    calculateSHE = calculateSHE,
+    nUpdateSamples = nUpdateSamples
   )
 
   itemName = itemPool[selectedItem]
@@ -43,7 +44,6 @@ browser()
   # administer item -- get item response from examinee (via simulation)
   selectedItemcovs = itemcovs[itemName,]
   selectedCovs = which(selectedItemcovs ==1)
-
 
   betaInterceptSum = sum(trueParameters$beta_intercept[which(names(trueParameters$beta_intercept) %in% paste0("beta_intercept[", selectedCovs,"]"))])
   betaLambdaSum = sum(trueParameters$beta_lambda[which(names(trueParameters$beta_lambda) %in% paste0("beta_lambda[", selectedCovs,"]"))])
@@ -62,9 +62,9 @@ browser()
   logit = trueIntercept + trueLambda*profileMatrix[trueProfiles,]%*%itemQ
   prob = exp(logit)/(1+exp(logit))
 
+
   responseVector = c(responseVector, rbinom(n =1, size =1, prob = prob))
   names(responseVector)[length(responseVector)] = itemAdministered[length(itemAdministered)]
-
 
 
 
@@ -83,9 +83,9 @@ browser()
     currentProfileProbablity = matrix(replicate(nItemSamples,currentProfileProbablity), nrow = nItemSamples, byrow = TRUE)
 
     for (profile in 1:nProfiles){
-      currentProfileProbablity[1:nItemSamples, profile] =
-        currentProfileProbablity[1:nItemSamples, profile] *
-        currentItemProbArray[1:nItemSamples, profile, responseVector[length(responseVector)]+1]
+      currentProfileProbablity[, profile] =
+        currentProfileProbablity[, profile] *
+        currentItemProbArray[, profile, responseVector[length(responseVector)]+1]
     }
     currentProfileProbablity = apply(currentProfileProbablity, 2, mean, na.rm = TRUE)
   }

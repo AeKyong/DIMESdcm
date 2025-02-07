@@ -1,6 +1,6 @@
 estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
                             betaInterceptInitMean=3, betaInterceptInitSD=.1, betaLambdaInitMean=3, betaLambdaInitSD=.1,
-                            varInterceptInitMean, varInterceptInitSD, varLambdaInitMean, varLambdaInitSD, varHyperParaA, varHyperParaB) {
+                            varInterceptInitMean=3, varInterceptInitSD=.1, varLambdaInitMean=3, varLambdaInitSD=.1, varPriorParaA, varPriorParaB) {
 
   # count attributes and profiles
   nAttributes = ncol(abilityQ)
@@ -53,8 +53,8 @@ estimateJagsEDCM = function(itemcovs, abilityQ, modelData, seed,
     observed = observed,
     nObserved = nObserved,
     profileMatrix = profileMatrix,
-    varHyperParaA = varHyperParaA,
-    varHyperParaB = varHyperParaB
+    varPriorParaA = varPriorParaA,
+    varPriorParaB = varPriorParaB
   )
 
 

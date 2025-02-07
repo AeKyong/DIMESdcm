@@ -10,16 +10,18 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
     itemUpdateFunction = c(
       "Sample 1",
       "Sample 10",
+      "Sample 8000",
       "EAP",
       "Mode"
     ),
     itemSummaryFunction = c(
       "Sample 1",
       "Sample 10",
+      "Sample 8000",
       "EAP",
       "Mode"
     ),
-    stopCriterion = c(.7, .8)
+    stopCriterion = c(.6, .8)
   )
 
 
@@ -61,15 +63,23 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   if (itemUpdateFunction == "Sample 1"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_singleDraw))
     calculateSHE = eval(quote(calculateSHEsingle))
+    nUpdateSamples = 1
   } else if (itemUpdateFunction == "Sample 10"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_multipleDraws))
     calculateSHE = eval(quote(calculateSHEmultiple))
+    nUpdateSamples = 10
+  } else if (itemUpdateFunction == "Sample 8000"){
+    itemUpdateFunction = eval(quote(itemUpdateProfileProbability_multipleDraws))
+    calculateSHE = eval(quote(calculateSHEmultiple))
+    nUpdateSamples = 8000
   } else if (itemUpdateFunction == "EAP"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_EAP))
     calculateSHE = eval(quote(calculateSHEsingle))
+    nUpdateSamples = 1
   } else if (itemUpdateFunction == "Mode"){
     itemUpdateFunction = eval(quote(itemUpdateProfileProbability_Mode))
     calculateSHE = eval(quote(calculateSHEsingle))
+    nUpdateSamples = 1
   }
 
   # Non-standard evaluation itemSummaryFunction
@@ -81,6 +91,10 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
     itemSummaryFunction =
       eval(quote(itemSummary_multipleDraws))
     nItemSamples = 10
+  } else if (itemSummaryFunction ==  "Sample 8000"){
+    itemSummaryFunction =
+      eval(quote(itemSummary_multipleDraws))
+    nItemSamples = 8000
   } else if (itemSummaryFunction ==  "EAP"){
     itemSummaryFunction =
       eval(quote(itemSummary_EAP))
@@ -94,9 +108,9 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
 
   # maxItem
   if (nItemsInPool < 105){
-    maxItems = 40
+    maxItems = 30
   } else if (nItemsInPool >= 105) {
-    maxItems = 40
+    maxItems = 30
   }
 
 
@@ -121,7 +135,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
               nItemsInPool = nItemsInPool, initialPilotSampleSize = initialPilotSampleSize,
               nNewStudents = nNewStudents, itemUpdateFunction = itemUpdateFunction,
               itemSummaryFunction = itemSummaryFunction, calculateSHE = calculateSHE, stopCriterion = stopCriterion,
-              nCalibrations = nCalibrations, maxItems = maxItems, nItemSamples = nItemSamples,
+              nCalibrations = nCalibrations, maxItems = maxItems, nUpdateSamples = nUpdateSamples, nItemSamples = nItemSamples,
               nCores = nCores, threadIDs = threadIDs)
 
   )

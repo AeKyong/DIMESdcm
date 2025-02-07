@@ -30,8 +30,8 @@ edcm_full = function(){
   inVar_intercept <- 1/var_intercept
   inVar_lambda <- 1/var_lambda
 
-  var_intercept ~ dlnorm(varHyperParaA, varHyperParaB)
-  var_lambda ~ dlnorm(varHyperParaA, varHyperParaB)
+  var_intercept ~ dlnorm(varPriorParaA, varPriorParaB)
+  var_lambda ~ dlnorm(varPriorParaA, varPriorParaB)
 
 
 
