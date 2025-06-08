@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#####Set Scheduler Configuration Directives#####
+
+#Name the job:
+#$ -N aDIMESdcm
+
+#Send e-mail at beginning/end/suspension of job
+#$ -m bes
+
+#E-mail address to send to
+#$ -M aekyong-jung@uiowa.edu
+
+#Start script in current working directory
+#$ -cwd
+
+#####End Set Scheduler Configuration Directives#####
+
+
+#####Resource Selection Directives#####
+
+#See the HPC wiki for complete resource information: https://wiki.uiowa.edu/display/hpcdocs/Argon+Cluster
+#Select the queue to run in
+#$ -q CASMA
+
+#Request four cores
+#$ -pe smp 16
+#$ -l mf=64G 
+#$ -l mem_free=64G
+
+#####End Resource Selection Directives#####
+#apptainer run ~/argonstack.sif R CMD BATCH catSimulation.R $SGE_TASK_ID
+apptainer exec argonstack.sif Rscript drafts/catSimulation.R $SGE_TASK_ID
