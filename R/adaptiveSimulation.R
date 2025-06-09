@@ -20,7 +20,7 @@ adaptiveSimulation = function(nProfiles, abilityQ, itemcovs, nItems, profileMatr
 
   print(itemNum)
   itemNum = itemNum +1
-browser()
+
 
   # select next item based on SHE algorithm
   selectedItem = selectNewItem(

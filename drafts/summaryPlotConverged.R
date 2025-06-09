@@ -1,21 +1,21 @@
 rm(list=ls())
 library(ggplot2)
 
-setwd("drafts/result")
+# setwd("drafts/result")
 
 # list files in directory
 directoryFiles = dir()
-nCondition = 192
-nReplicationsPerCondition = 5
+nCondition = 1
+nReplicationsPerCondition = 1
 
 
 # list only simulation results files
 repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
-# repFiles = paste0("rep_", 1:(0+nCondition*nReplicationsPerCondition),".RData")
+repFiles = paste0("rep_", 1,".RData")
 
 
 # check incomplete files
-total = c(1:960)
+total = c(1:1)
 completeFiles = as.numeric(gsub("\\D", '', repFiles))
 incompleteFiles = total[which(!total %in% completeFiles)]
 
@@ -328,22 +328,22 @@ plotByFactor = function(criterion, criterionName, conditionsMatrix) {
   statistics = summaryByFactor(criterion = criterion, conditionsMatrix = conditionsMatrix)
 
   par(mfrow = c(1,1))
-  # # stop criteria =======================
-  # stop = statistics[,c("stop1.mean","stop2.mean")]
-  # matplot(stop,
-  #         type="l",
-  #         ylab=criterionName,
-  #         xlab = "n",
-  #         main="Stopping Criteria",
-  #         col=1:2,
-  #         lty=1
-  # )
-  #
-  # legend("topright",
-  #        legend=c("0.7","0.8"),
-  #        col=1:2,
-  #        lty=1
-  # )
+  # stop criteria =======================
+  stop = statistics[,c("stop1.mean","stop2.mean")]
+  matplot(stop,
+          type="l",
+          ylab=criterionName,
+          xlab = "n",
+          main="Stopping Criteria",
+          col=1:2,
+          lty=1
+  )
+
+  legend("topright",
+         legend=c("0.7","0.8"),
+         col=1:2,
+         lty=1
+  )
 
 
 
@@ -356,21 +356,21 @@ plotByFactor = function(criterion, criterionName, conditionsMatrix) {
           xlab = "# of Calibrations",
           main="Item Selection Function",
           col=1:4,
-          lty=1,,
-          lwd =2,
-          ylim=c(20, 32),
-          cex= 1.5,
-          cex.lab = 1.5,
-          cex.axis = 1.5
+          lty=1,
+          # lwd =2,
+          # ylim=c(20, 32),
+          # cex= 1.5,
+          # cex.lab = 1.5,
+          # cex.axis = 1.5
   )
 
-  # legend("topright",
-  #        legend=c("Sample 1","Sample 10", "Mean", "Mode"),
-  #        col = 1:4,
-  #        lty = 1,
-  #        bty = "n",
-  #        cex= 1.5
-  # )
+  legend("topright",
+         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
+         col = 1:4,
+         lty = 1,
+         bty = "n",
+         # cex= 1.5
+  )
 
   # item summary function ====================
   summary = statistics[,c("summary1.mean","summary2.mean","summary3.mean","summary4.mean")]
@@ -381,55 +381,55 @@ plotByFactor = function(criterion, criterionName, conditionsMatrix) {
           main="Profile Updating Function",
           col=1:4,
           lty=1,
-          lwd =2,
-          ylim=c(0.82, 0.88),
-          cex= 1.5,
-          cex.lab = 1.5,
-          cex.axis = 1.5
+          # lwd =2,
+          # ylim=c(0.82, 0.88),
+          # cex= 1.5,
+          # cex.lab = 1.5,
+          # cex.axis = 1.5
   )
 
-  # legend("topright",
-  #        legend=c("Sample 1","Sample 10", "Mean", "Mode"),
-  #        col = 1:4,
-  #        lty = 1,
-  #        bty = "n",
-  #        cex= 1.5
-  # )
+  legend("topright",
+         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
+         col = 1:4,
+         lty = 1,
+         bty = "n"
+         # cex= 1.5
+  )
 
-  # # pilot sample size function ================
-  # size = statistics[,c("size1.mean","size2.mean","size3.mean")]
-  # matplot(size,
-  #         type="l",
-  #         ylab=criterionName,
-  #         xlab = "n",
-  #         main="Pilot Sample Size",
-  #         col=1:3,
-  #         lty=1,
-  #         ylim=c(0,0.5)
-  # )
-  #
-  # legend("topright",
-  #        legend=c("30","300", "2000"),
-  #        col = 1:3,
-  #        lty = 1
-  # )
-  #
-  #
-  # # item pool size function ================
-  # pool = statistics[,c("pool1.mean","pool2.mean")]
-  # matplot(pool,
-  #         type="l",
-  #         ylab=criterionName,
-  #         main="Item Pool Size",
-  #         col=1:2,
-  #         lty=1
-  # )
-  #
-  # legend("topright",
-  #        legend=c("40", "105"),
-  #        col = 1:2,
-  #        lty = 1
-  # )
+  # pilot sample size function ================
+  size = statistics[,c("size1.mean","size2.mean","size3.mean")]
+  matplot(size,
+          type="l",
+          ylab=criterionName,
+          xlab = "n",
+          main="Pilot Sample Size",
+          col=1:3,
+          lty=1
+          # ylim=c(0,0.5)
+  )
+
+  legend("topright",
+         legend=c("30","300", "2000"),
+         col = 1:3,
+         lty = 1
+  )
+
+
+  # item pool size function ================
+  pool = statistics[,c("pool1.mean","pool2.mean")]
+  matplot(pool,
+          type="l",
+          ylab=criterionName,
+          main="Item Pool Size",
+          col=1:2,
+          lty=1
+  )
+
+  legend("topright",
+         legend=c("40", "105"),
+         col = 1:2,
+         lty = 1
+  )
 
 }
 
@@ -437,14 +437,14 @@ criteriaName = c("Intercept Bias", "Slope Bias", "Variance of Intercept Bias", "
                  "Intercept RMSE", "Slope RMSE", "Variance of Intercept RMSE", "Variance of Slope RMSE",
                  "Item Exposure Rate", "Item Exposure Chi-Square", "Profile Recovery Rate", "Attribute Recovery Rate")
 
-# pdf("plots.pdf")
+pdf("plots_uniform.pdf")
 
 for (i in 1:length(criteria)){
 
   plotByFactor(criterion = criteria[i],criterionName = criteriaName[i], conditionsMatrix=conditionsMatrix)
 
 }
-# dev.off()
+dev.off()
 
 
 

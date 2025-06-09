@@ -6,7 +6,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   conditions = list(
     nItemsInPool = c(40, 105),
     initialPilotSampleSize = c(30, 300, 2000),
-    nNewStudents = c(30),
+    nNewStudents = c(30, 300),
     itemUpdateFunction = c(
       "Sample 1",
       "Sample 10",
@@ -21,7 +21,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
       "EAP",
       "Mode"
     ),
-    stopCriterion = c(.6, .8)
+    stopCriterion = c(.7, .9)
   )
 
 
