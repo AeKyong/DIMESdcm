@@ -606,7 +606,9 @@ print(calibration)
                  "simDataList",
                  "simulationSpecs",
                  "selectNewItem",
-                 "nProfiles"),
+                 "nProfiles",
+                 "dec2bin",
+                 "nAttributes"),
      envir = environment()
    )
 
