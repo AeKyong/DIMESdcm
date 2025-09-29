@@ -1,10 +1,18 @@
 Package: DIMESdcm
-Title: What the Package Does (One Line, Title Case)
+Title: Bayesian Adaptive Testing Using Explanatory Diagnostic Classification Models
 Version: 0.0.1
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person("Ae Kyong", "Jung", 
+            email = "aekyong-jung@uiowa.edu", 
+            role = c("aut", "cre"),
+            comment = c(ORCID = "0000-0003-0665-4876"))
+    person("Jonathan", "Templin", 
+            email = "jonathan-templin@uiowa.edu", 
+            role = c("aut"),
+            comment = c(ORCID = "0000-0001-7616-0973"))
+)
+   
+Description: Provides functions to conduct Bayesian adaptive testing for cognitive diagnosis. This package implements a flexible framework for specifying explanatory variables within diagnostic classification models (DCMs). Key functions allow for item selection, ability estimation, and simulation of adaptive testing procedures based on entropy measures such as Shannon Entropy.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
