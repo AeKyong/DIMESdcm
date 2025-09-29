@@ -42,7 +42,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
       basevector = unlist(lapply(X = conditions, FUN = length))
     ) + 1
   }
-
+# browser()
   # populate condition values
   nItemsInPool = conditions$nItemsInPool[conditionsMatrix[conditionNumber,1]]
   initialPilotSampleSize = conditions$initialPilotSampleSize[conditionsMatrix[conditionNumber,2]]

@@ -1,7 +1,6 @@
 rm(list = ls())
 devtools::load_all(".")
 
-# install.packages("modeest", repos = "http://cran.us.r-project.org",lib = "/Users/aekjung/DIMESdcm/Rlibs")
 library(DIMESdcm)
 library(parallel)
 library(R2jags)
@@ -13,11 +12,11 @@ library(readxl)
 library(bayesplot)
 library(extraDistr)
 library(modeest)
-# library(modeest, lib.loc = "/Users/aekjung/DIMESdcm/Rlibs")
+
 
 # grab command line arguments
-arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
-# arrayNumber = 1
+# arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
+arrayNumber = 1
 
 set.seed(arrayNumber)
 

@@ -3,7 +3,7 @@
 #####Set Scheduler Configuration Directives#####
 
 #Name the job:
-#$ -N aDIMESdcm
+#$ -N DCATp
 
 #Send e-mail at beginning/end/suspension of job
 #$ -m bes
@@ -21,11 +21,12 @@
 
 #See the HPC wiki for complete resource information: https://wiki.uiowa.edu/display/hpcdocs/Argon+Cluster
 #Select the queue to run in
-#$ -q CASMA
+#$ -q all.q
 
 #Request four cores
 #$ -pe smp 4
 
 #####End Resource Selection Directives#####
 #apptainer run ~/argonstack.sif R CMD BATCH catSimulation.R $SGE_TASK_ID
-apptainer exec argonstack.sif Rscript drafts/catSimulation.R $SGE_TASK_ID
+#apptainer exec argonstack.sif Rscript summaryPlot.R 
+Rscript summaryPlot.R 
