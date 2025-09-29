@@ -6,7 +6,15 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
 
   nStudents = length(threadIDs[[thread]])
   runningData = NULL
-  estimatedProfileProbability = NULL
+  estimatedProfiles = NULL
+
+  profileMatrix = NULL
+  for (i in 0:(nProfiles - 1)){
+    profileMatrix = rbind(
+      profileMatrix,
+      dec2bin(decimal_number = i, nattributes = nAttributes, basevector = rep(2, nAttributes))
+    )
+  }
 
 
   for (student in 1:nStudents){
@@ -37,7 +45,7 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
     responses = testDraw$responseVector
     items = rownames(testDraw$responseVector)
 
-    # add response vector to data frame
+    # add response vector to running data
     responses = responses[1:nItems]
 
     locations = as.numeric(substr(items, start = 2, stop = nchar(items)-1))
@@ -47,23 +55,41 @@ parallelAdaptiveSimulation = function(thread, threadIDs,tempEstimatedParameters,
     }
 
 
+    # change estimated profiles to attributes
+    profile2attribute = as.data.frame(profileMatrix)
+    profile2attribute$jointProb = testDraw$currentProfileProbablity
+    attributeMAPs = matrix(NA, ncol = ncol(profileMatrix))
+    for (att in 1:ncol(profileMatrix)){
+      attribute = sum(profile2attribute[profile2attribute[,att]==1,"jointProb"])
+      attribute = ifelse(attribute>=.5, 1, 0)
+      attributeMAPs[,att] = attribute
+    }
+    colnames(attributeMAPs) = paste0("attributeMAP", 1:ncol(profileMatrix))
 
-    profileProbabilityTemp = as.data.frame(t(testDraw$currentProfileProbablity))
-    colnames(profileProbabilityTemp) = paste0("profile", 1:length(testDraw$currentProfileProbablity))
-
-    profileProbabilityTemp$profile = testDraw$currentProfile
-    profileProbabilityTemp$student = threadIDs[[thread]][student]
-    profileProbabilityTemp$calibration = calibration
-    profileProbabilityTemp$trueProfile = trueProfiles[threadIDs[[thread]][student]]
-
-    estimatedProfileProbability = rbind(estimatedProfileProbability, profileProbabilityTemp)
+    # change true profile to attributes
+    trueAttributes = matrix(NA, ncol = 3)
+    for(att in 1:ncol(profileMatrix)){
+      trueAttributes[,att] = profileMatrix[trueProfiles[threadIDs[[thread]][student]],att]
+    }
+    colnames(trueAttributes) = paste0("trueAttribute", 1:ncol(profileMatrix))
 
 
+    # the respondent's profile and attribute
+    profileTemp = as.data.frame(t(testDraw$currentProfileProbablity))
+    colnames(profileTemp) = paste0("profileEAP", 1:length(testDraw$currentProfileProbablity))
 
+    profileTemp$profileMAP = testDraw$currentProfile
+    profileTemp = cbind(profileTemp, as.data.frame(attributeMAPs))
+    profileTemp$student = threadIDs[[thread]][student]
+    profileTemp$calibration = calibration
+    profileTemp$trueProfile = trueProfiles[threadIDs[[thread]][student]]
+    profileTemp = cbind(profileTemp, trueAttributes)
+
+    estimatedProfiles = rbind(estimatedProfiles, profileTemp)
   }
 
 
-return(list(estimatedProfileProbability = estimatedProfileProbability,
+return(list(estimatedProfiles = estimatedProfiles,
             runningData = runningData))
 
 

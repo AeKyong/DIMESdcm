@@ -1,48 +1,43 @@
-rm(list=ls())
+devtools::load_all()
 library(ggplot2)
-
-# setwd("drafts/result")
-
-# list files in directory
-directoryFiles = dir()
-nCondition = 32
-nReplicationsPerCondition = 5
+library(tidyr)
+library(dplyr)
 
 
-# list only simulation results files
-# repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
-repFiles = paste0("rep_", 641:(640+nCondition*nReplicationsPerCondition),".RData")
 
-
-# check incomplete files
-total = c(641:800)
-completeFiles = as.numeric(gsub("\\D", '', repFiles))
-incompleteFiles = total[which(!total %in% completeFiles)]
-
-
-# calculate measurement accuracy =================================================
-# calculate bias, rmse, exposure rate, profile recovery rate (list by arrayNumber)
-nAttributes = 3
-nProfiles = 2^nAttributes
-
-profileMatrix = NULL
-for (i in 0:(nProfiles - 1)){
-  profileMatrix = rbind(
-    profileMatrix,
-    dec2bin(decimal_number = i, nattributes = nAttributes, basevector = rep(2, nAttributes))
-  )
+dec2bin = function(decimal_number, nattributes, basevector){
+  dec = decimal_number
+  profile = matrix(NA, nrow = 1, ncol = nattributes)
+  for (i in nattributes:1){
+    profile[1,i] =  dec %% basevector[i]
+    dec = (dec - dec %% basevector[i])/basevector[i]
+  }
+  return(profile)
 }
 
 
-results = list()
-for (file in 1:length(repFiles)){
+# list files in directory
+directoryFiles = dir()
+nCondition = 600
+nReplicationsPerCondition = 100
 
 
-  fileName = repFiles[[file]]
-  # fileName = repFiles[grep(paste0("rep_", file, ".RData"), repFiles)]
+# list only simulation results files
+repFiles = directoryFiles[grep(pattern = "rep\\_", x = directoryFiles)]
+
+# calculate measurement accuracy =================================================
+resultsLong = NULL
+arrayNumber = 1
+for (arrayNumber in 1:(nCondition*nReplicationsPerCondition)){
+  print(arrayNumber)
+
+  fileName = repFiles[which(repFiles == paste0("rep_",arrayNumber,".RData"))]
+
+  # grep only complete files
+  if (!any(directoryFiles %in% fileName)) next
+
+  # if (any(directoryFiles %in% fileName)){
   load(file = fileName)
-
-
 
   # get the number of calibration
   calibrationF = as.factor(estimatedParameters$calibration)
@@ -55,7 +50,7 @@ for (file in 1:length(repFiles)){
   running = runningData[(nStudents+1):nrow(runningData), ]
 
   # extract nNewStudents
-  nNewStudents =  max(estimatedProfileProbability[,"student"])
+  nNewStudents =  max(estimatedProfiles[,"student"])
 
 
   betaInterceptBias = NULL
@@ -68,11 +63,14 @@ for (file in 1:length(repFiles)){
   varLambdaRMSE = NULL
   exposure = NULL
   exposureRateMean = NULL
-  # exposureRateMax = NULL
-  # unUsedItemN = NULL
-  chiSquare = NULL
+  exposureRateMax = NULL
+  unUsedItemN = NULL
   profileRecoveryRate = NULL
   attributeRecoveryRate = NULL
+  testLengthMean = NULL
+  testLengthSD = NULL
+  testLengthMin = NULL
+  testLengthMax = NULL
   unconvg = NULL
   for (nCalibration in 1:length(calibration)) {
 
@@ -88,32 +86,26 @@ for (file in 1:length(repFiles)){
 
 
 
-    # BIAS and RMSE ============================================================
+    # BIAS and RMSE of item parameters ============================================================
+
     # get deviation: eap - trueValues
     deviation = dat$eap- dat$trueValues
 
-    # # get bias
-    # betaInterceptBias[nCalibration] = mean(deviation[betaInterceptRow])
-    # betaLambdaBias[nCalibration] = mean(deviation[betaLambdaRow])
-    # varInterceptBias[nCalibration] = mean(deviation[varInterceptRow])
-    # varLambdaBias[nCalibration] = mean(deviation[varLambdaRow])
-
     # get absolute bias
-    betaInterceptBias[nCalibration] = mean(abs(deviation[betaInterceptRow]))
-    betaLambdaBias[nCalibration] = mean(abs(deviation[betaLambdaRow]))
-    varInterceptBias[nCalibration] = mean(abs(deviation[varInterceptRow]))
-    varLambdaBias[nCalibration] = mean(abs(deviation[varLambdaRow]))
+    betaInterceptBias = mean(abs(deviation[betaInterceptRow]))
+    betaLambdaBias = mean(abs(deviation[betaLambdaRow]))
+    varInterceptBias = mean(abs(deviation[varInterceptRow]))
+    varLambdaBias = mean(abs(deviation[varLambdaRow]))
 
     # get rmse
-    betaInterceptRMSE[nCalibration] = sqrt(mean(deviation[betaInterceptRow]^2))
-    betaLambdaRMSE[nCalibration] = sqrt(mean(deviation[betaLambdaRow]^2))
-    varInterceptRMSE[nCalibration] = sqrt(mean(deviation[varInterceptRow]^2))
-    varLambdaRMSE[nCalibration] = sqrt(mean(deviation[varLambdaRow]^2))
+    betaInterceptRMSE = sqrt(mean(deviation[betaInterceptRow]^2))
+    betaLambdaRMSE = sqrt(mean(deviation[betaLambdaRow]^2))
+    varInterceptRMSE = sqrt(mean(deviation[varInterceptRow]^2))
+    varLambdaRMSE = sqrt(mean(deviation[varLambdaRow]^2))
 
 
 
-
-    # Exposure Rate ============================================================
+    # Item Exposure Rate ============================================================
     first = nNewStudents * (nCalibration-1) + 1
     last = nNewStudents * nCalibration
 
@@ -122,259 +114,91 @@ for (file in 1:length(repFiles)){
 
     # get exposure rate
     expRate = colSums(!is.na(response))/nNewStudents
-    expRateMean = mean(expRate)
 
-    exposureRateMean[nCalibration] = expRateMean
-    # exposureRateMax[nCalibration] = max(expRate)
-    # unUsedItemN[nCalibration] = length(which(expRate == 0))
-    chiSquare[nCalibration] = sum((expRate - expRateMean)^2/expRateMean) # Lin & Chang (2019)
+    exposureRateMean = mean(expRate)
+    unUsedItemN = length(which(expRate == 0))
 
 
 
-    # Recovery Rate =============================================
-    profiles = estimatedProfileProbability[which(estimatedProfileProbability$calibration == nCalibration), ]
+    # Test Length ===================================================================
+    testLength = rowSums(!is.na(response))
+    testLengthMean = mean(testLength)
+    testLengthSD = sd(testLength)
+    testLengthMin = min(testLength)
+    testLengthMax = max(testLength)
+
+
+
+    # Recovery Rate =================================================================
+    profiles = estimatedProfiles[which(estimatedProfiles$calibration == nCalibration), ]
 
     # 1. profile recovery rate
-    nSame = length(which(profiles$profile == profiles$trueProfile))
-    profileRecoveryRate[nCalibration] = nSame/nNewStudents
-
+    nSame = length(which(profiles$profileMAP == profiles$trueProfile))
+    profileRecoveryRate = nSame/nNewStudents
 
     # 2. attribute pattern recovery rate
-    estimatedPattern = profileMatrix[profiles$profile,]
-    truePattern = profileMatrix[profiles$trueProfile,]
-
-    nSamePattern = matrix(NA, ncol= ncol(estimatedPattern), nrow = nrow(estimatedPattern))
-    for (i in 1:ncol(estimatedPattern)){
-      nSamePattern[,i] = estimatedPattern[,i] - truePattern[,i]
-    }
-
-    nSameAttribute = length(which(nSamePattern == 0))
-    attributeRecoveryRate[nCalibration] = nSameAttribute / length(nSamePattern)
+    estiA = profiles[grep("attributeMAP", names(profiles))]
+    trueA = profiles[grep("trueAttribute", names(profiles))]
+    nAccurate = mapply(function(e, t) sum(e == t), estiA, trueA)
+    attributeRecoveryRate = sum(nAccurate) / sum(lengths(estiA))
 
 
 
     # maxRhat ===================================================
-   if(calibrationData[[nCalibration]]$maxRhat>1.1){
-     unconvg[nCalibration] = 1
-   }else{
-     unconvg[nCalibration] = 0
-       }
-
-  }
-
-  results[[file]] = data.frame(betaInterceptBias = betaInterceptBias, betaLambdaBias = betaLambdaBias,
-                               varInterceptBias = varInterceptBias, varLambdaBias = varLambdaBias,
-                               betaInterceptRMSE = betaInterceptRMSE, betaLambdaRMSE = betaLambdaRMSE,
-                               varInterceptRMSE = varInterceptRMSE, varLambdaRMSE = varLambdaRMSE,
-                               exposureRateMean = exposureRateMean,  chiSquare = chiSquare,
-                               # unUsedItemN = unUsedItemN,exposureRateMax = exposureRateMax,
-                               profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate,
-                               unconvg = unconvg)
-
-}
-
-betaInterceptBiasL = NULL
-betaLambdaBiasL = NULL
-varInterceptBiasL = NULL
-varLambdaBiasL = NULL
-
-betaInterceptRmseL = NULL
-betaLambdaRmseL = NULL
-varInterceptRmseL = NULL
-varLambdaRmseL = NULL
-
-exposureRateL = NULL
-exposureChisquareL = NULL
-profileRecoveryL = NULL
-attributeRecoveryL = NULL
-
-nUnconverged = NULL
-for (arrayNumber in 1:length(repFiles)){
-
-  conditionN = ceiling(arrayNumber/nReplicationsPerCondition)
-  replicationN = arrayNumber %% nReplicationsPerCondition
-  replicationN[which(replicationN %in% 0)] = nReplicationsPerCondition
-
-  # Bias =======================
-  betaInterceptB = cbind(results[[arrayNumber]]$betaInterceptBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  betaLambdaB = cbind(results[[arrayNumber]]$betaLambdaBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varInterceptB = cbind(results[[arrayNumber]]$varInterceptBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varLambdaB = cbind(results[[arrayNumber]]$varLambdaBias, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  # Bias long data
-  betaInterceptBiasL = rbind(betaInterceptBiasL, betaInterceptB)
-  betaLambdaBiasL = rbind(betaLambdaBiasL, betaLambdaB)
-  varInterceptBiasL = rbind(varInterceptBiasL, varInterceptB)
-  varLambdaBiasL = rbind(varLambdaBiasL, varLambdaB)
-
-
-  # Rmse =======================
-  betaInterceptR = cbind(results[[arrayNumber]]$betaInterceptRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  betaLambdaR = cbind(results[[arrayNumber]]$betaLambdaRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varInterceptR = cbind(results[[arrayNumber]]$varInterceptRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  varLambdaR = cbind(results[[arrayNumber]]$varLambdaRMSE, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  # Rmse long data
-  betaInterceptRmseL = rbind(betaInterceptRmseL, betaInterceptR)
-  betaLambdaRmseL = rbind(betaLambdaRmseL, betaLambdaR)
-  varInterceptRmseL = rbind(varInterceptRmseL, varInterceptR)
-  varLambdaRmseL = rbind(varLambdaRmseL, varLambdaR)
-
-
-  # exposure rate ==============
-  expMean = cbind(results[[arrayNumber]]$exposureRateMean, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  expChisquare = cbind(results[[arrayNumber]]$chiSquare, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  # exposure rate long data
-  exposureRateL = rbind(exposureRateL, expMean)
-  exposureChisquareL = rbind(exposureChisquareL, expChisquare)
-
-
-
-  # Recovery Rate ==============
-  profileR = cbind(results[[arrayNumber]]$profileRecoveryRate, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-  attributeR = cbind(results[[arrayNumber]]$attributeRecoveryRate, conditionN, replicationN, arrayNumber, as.numeric(rownames(results[[arrayNumber]])))
-
-  profileRecoveryL = rbind(profileRecoveryL, profileR)
-  attributeRecoveryL = rbind(attributeRecoveryL, attributeR)
-
-
-  # not converged ==============
-  nUnconverged[arrayNumber] =  sum(results[[arrayNumber]]$unconvg)
-
-}
-
-sum(nUnconverged[(1:160)])/(160*40)   #pilot sample 30: 0.1275(40 itempool)  0.1515625(150 itempool)
-sum(nUnconverged[(161:320)])/(160*40) #pilot sample 300: 0.2492187(40 itempool) 0.05921875(150 itempool)
-sum(nUnconverged[(321:480)])/(160*40) #pilot sample 2000: 0.4578125
-
-
-# change to data frame
-betaInterceptBiasL = as.data.frame(betaInterceptBiasL)
-betaLambdaBiasL  = as.data.frame(betaLambdaBiasL)
-varInterceptBiasL  = as.data.frame(varInterceptBiasL)
-varLambdaBiasL   = as.data.frame(varLambdaBiasL)
-
-betaInterceptRmseL = as.data.frame(betaInterceptRmseL)
-betaLambdaRmseL   = as.data.frame(betaLambdaRmseL)
-varInterceptRmseL  = as.data.frame(varInterceptRmseL)
-varLambdaRmseL   = as.data.frame(varLambdaRmseL)
-
-exposureRateL  = as.data.frame(exposureRateL)
-exposureChisquareL   = as.data.frame(exposureChisquareL)
-profileRecoveryL  = as.data.frame(profileRecoveryL)
-attributeRecoveryL   = as.data.frame(attributeRecoveryL)
-
-
-colnames(betaInterceptBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(betaLambdaBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varInterceptBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varLambdaBiasL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-colnames(betaInterceptRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(betaLambdaRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varInterceptRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(varLambdaRmseL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-colnames(exposureRateL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(exposureChisquareL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(profileRecoveryL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-colnames(attributeRecoveryL) = c("value", "conditionN", "replicationN", "arrayNumber", "calibrationN")
-
-
-# draw plots & get summary statistics ===================================================================
-criteria = list(betaInterceptBiasL, betaLambdaBiasL, varInterceptBiasL, varLambdaBiasL, betaInterceptRmseL ,betaLambdaRmseL,
-                varInterceptRmseL, varLambdaRmseL, exposureRateL, exposureChisquareL, profileRecoveryL, attributeRecoveryL)
-criteriaName = c("betaInterceptBias", "betaLambdaBias", "varInterceptBias", "varLambdaBias", "betaInterceptRmse", "betaLambdaRmse",
-                 "varInterceptRmse", "varLambdaRmse", "exposureRate", "exposureChisquare", "profileRecovery", "attributeRecovery")
-
-pdf("plots.pdf")
-descriptiveStatistics = NULL
-for (cri in 1:length(criteria)) {
-
-  # choose one criterion among criteriaN
-  criterion = criteria[[cri]]
-
-  for (condition in 1:nCondition) {
-
-    # choose one condition in the criteria
-    criterionCond = criterion[which(criterion$conditionN == condition),]
-
-
-
-    if (cri %in% c(4, 8)){
-      # varLambda bias, rmse
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim = c(0, 12),
-              main = paste0("condition", condition)
-      )
-    } else if (cri %in% c(10)){
-      # exposure chi square
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim = c(0, 30),
-              main = paste0("condition", condition)
-      )
-    } else {
-      # draw a box plot
-      boxplot(value ~ calibrationN,
-              data = criterionCond,
-              xlab = "# of Calibration",
-              ylab = criteriaName[cri],
-              ylim  = c(0, 1),
-              main = paste0("condition", condition)
-      )
+    if(calibrationData[[nCalibration]]$maxRhat>1.1){
+      unconvg = 1
+    }else{
+      unconvg = 0
     }
 
 
 
-     # summary statistics
-    for (nCalibration in 1:max(criterionCond$calibrationN)){
+    result = data.frame(betaInterceptBias = betaInterceptBias, betaLambdaBias = betaLambdaBias,
+                        varInterceptBias = varInterceptBias, varLambdaBias = varLambdaBias,
+                        betaInterceptRMSE = betaInterceptRMSE, betaLambdaRMSE = betaLambdaRMSE,
+                        varInterceptRMSE = varInterceptRMSE, varLambdaRMSE = varLambdaRMSE,
+                        exposureRateMean = exposureRateMean, unUsedItemN = unUsedItemN,
+                        testLengthMean = testLengthMean, testLengthSD = testLengthSD,
+                        testLengthMin = testLengthMin, testLengthMax = testLengthMax,
+                        profileRecoveryRate = profileRecoveryRate, attributeRecoveryRate = attributeRecoveryRate,
+                        unconvg = unconvg, nCalibration = nCalibration, arrayNumber = arrayNumber)
 
-      # choose one calibration
-      caliN = criterionCond[criterionCond$calibrationN==nCalibration,]
-      quan = as.data.frame(t(quantile(caliN$value)))
-      quan$mean = mean(caliN$value)
-      quan$sd = sd(caliN$value)
-      quan$variable = criteriaName[cri]
-      quan$conditionN = condition
-      quan$calibrationN = nCalibration
+    # add condition number
+    result$conditionN = ceiling(arrayNumber/nReplicationsPerCondition)
 
-      descriptiveStatistics = rbind(descriptiveStatistics, quan)
+    # remove value of unconverged calibration
+    result[which(result$unconvg == 1), !colnames(result) %in% c("unconvg", "arrayNumber", "nCalibration", "conditionN")] = NA
 
-    }
-  }
-}
-
-dev.off()
-
+    # combine the result with resultsLong
+    resultsLong = rbind(resultsLong, result)
 
 
+  } #// end of nCalibration
+  # } #// end of if(completeFiles)
+} #// end of arrayNumber
 
-# Summary Statistics by Factors ==============================================
+
+
 # create conditions list
 conditions = list(
   nItemsInPool = c(40, 105),
   initialPilotSampleSize = c(30, 300, 2000),
-  nNewStudents = c(30),
+  nNewStudents = c(30, 300),
   itemUpdateFunction = c(
     "Sample 1",
     "Sample 10",
+    "Sample 8000",
     "EAP",
-    "Mode"
+    "MAP"
   ),
   itemSummaryFunction = c(
     "Sample 1",
     "Sample 10",
+    "Sample 8000",
     "EAP",
-    "Mode"
+    "MAP"
   ),
-  stopCriterion = c(.7, .8)
+  stopCriterion = c(.7, .9)
 )
 
 # number of conditions
@@ -392,154 +216,354 @@ for (cond in 1:nConditions){
   ) + 1
 }
 
-# Function for summarizing results by factor ===================================
-# !! The factor, item pool, is not considered now!!
-summaryByFactor = function (criteria, conditionsMatrix) {
+conditionsMatrix = as.data.frame(conditionsMatrix)
+conditionsMatrix = data.frame(lapply(conditionsMatrix, as.factor))
+conditionsMatrix$conditionN = 1:nrow(conditionsMatrix)
 
-  criteria = as.data.frame(criteria)
-  statistics = NULL
-  for (calibrationN in 1:40) {
-    nCalibration = criteria[which(criteria$calibrationN == calibrationN), c("value","conditionN","arrayNumber","calibrationN")]
 
-    # stop criteria
-    stop1 = which(conditionsMatrix[,"stopCriterion"] == 1)
-    stop2 = which(conditionsMatrix[,"stopCriterion"] == 2)
-    stop1.mean = mean(nCalibration[which(nCalibration$conditionN %in% stop1),"value"])
-    stop2.mean = mean(nCalibration[which(nCalibration$conditionN %in% stop2),"value"])
-    stop = cbind(stop1.mean, stop2.mean)
 
-    # item summary function
-    summary1 = which(conditionsMatrix[,"itemSummaryFunction"] == 1)
-    summary2 = which(conditionsMatrix[,"itemSummaryFunction"] == 2)
-    summary3 = which(conditionsMatrix[,"itemSummaryFunction"] == 3)
-    summary4 = which(conditionsMatrix[,"itemSummaryFunction"] == 4)
-    summary1.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary1), "value"])
-    summary2.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary2), "value"])
-    summary3.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary3), "value"])
-    summary4.mean = mean(nCalibration[which(nCalibration$conditionN %in% summary4), "value"])
-    summary = cbind(summary1.mean, summary2.mean, summary3.mean, summary4.mean)
+# Add condition-factor columns to resultsLong
+resultsLongConds = merge(resultsLong, conditionsMatrix, by = "conditionN", all.x = TRUE)
 
-    # item update function
-    update1 = which(conditionsMatrix[,"itemUpdateFunction"] == 1)
-    update2 = which(conditionsMatrix[,"itemUpdateFunction"] == 2)
-    update3 = which(conditionsMatrix[,"itemUpdateFunction"] == 3)
-    update4 = which(conditionsMatrix[,"itemUpdateFunction"] == 4)
-    update1.mean = mean(nCalibration[which(nCalibration$conditionN %in% update1), "value"])
-    update2.mean = mean(nCalibration[which(nCalibration$conditionN %in% update2), "value"])
-    update3.mean = mean(nCalibration[which(nCalibration$conditionN %in% update3), "value"])
-    update4.mean = mean(nCalibration[which(nCalibration$conditionN %in% update4), "value"])
-    update = cbind(update1.mean, update2.mean, update3.mean, update4.mean)
+# Select only converged calibration
+resultsConvg = resultsLongConds[which(resultsLongConds$unconvg==0),]
 
-    # initial pilot sample size
-    size1 = which(conditionsMatrix[,"initialPilotSampleSize"] == 1)
-    size2 = which(conditionsMatrix[,"initialPilotSampleSize"] == 2)
-    size3 = which(conditionsMatrix[,"initialPilotSampleSize"] == 3)
-    size1.mean = mean(nCalibration[which(nCalibration$conditionN %in% size1), "value"])
-    size2.mean = mean(nCalibration[which(nCalibration$conditionN %in% size2), "value"])
-    size3.mean = mean(nCalibration[which(nCalibration$conditionN %in% size3), "value"])
-    size = cbind(size1.mean, size2.mean, size3.mean)
+# Convert conditions to factors
+resultsConvg$nItemsInPool = as.factor(resultsConvg$nItemsInPool)
+resultsConvg$initialPilotSampleSize = as.factor(resultsConvg$initialPilotSampleSize)
+resultsConvg$nNewStudents = as.factor(resultsConvg$nNewStudents)
+resultsConvg$itemSummaryFunction = as.factor(resultsConvg$itemSummaryFunction)
+resultsConvg$itemUpdateFunction = as.factor(resultsConvg$itemUpdateFunction)
+resultsConvg$stopCriterion = as.factor(resultsConvg$stopCriterion)
 
-    stat = cbind(stop, summary, update, size)
-    statistics = rbind(statistics, stat)
+# Aggregate the data using the .data pronoun with string names
+resultsAggregated = resultsConvg %>%
+  group_by(nCalibration, nItemsInPool, initialPilotSampleSize, nNewStudents,
+           itemSummaryFunction, itemUpdateFunction, stopCriterion) %>%
+  summarise(
+    betaInterceptBias.Mean = mean(betaInterceptBias, na.rm = TRUE),
+    betaInterceptBias.SD = sd(betaInterceptBias, na.rm = TRUE),
+    betaLambdaBias.Mean = mean(betaLambdaBias, na.rm = TRUE),
+    betaLambdaBias.SD = sd(betaLambdaBias, na.rm = TRUE),
+    varInterceptBias.Mean = mean(varInterceptBias, na.rm = TRUE),
+    varInterceptBias.SD = sd(varInterceptBias, na.rm = TRUE),
+    varLambdaBias.Mean = mean(varLambdaBias, na.rm = TRUE),
+    varLambdaBias.SD = sd(varLambdaBias, na.rm = TRUE),
+    betaInterceptRMSE.Mean = mean(betaInterceptRMSE, na.rm = TRUE),
+    betaInterceptRMSE.SD = sd(betaInterceptRMSE, na.rm = TRUE),
+    betaLambdaRMSE.Mean = mean(betaLambdaRMSE, na.rm = TRUE),
+    betaLambdaRMSE.SD = sd(betaLambdaRMSE, na.rm = TRUE),
+    varInterceptRMSE.Mean = mean(varInterceptRMSE, na.rm = TRUE),
+    varInterceptRMSE.SD = sd(varInterceptRMSE, na.rm = TRUE),
+    varLambdaRMSE.Mean = mean(varLambdaRMSE, na.rm = TRUE),
+    varLambdaRMSE.SD = sd(varLambdaRMSE, na.rm = TRUE),
+    exposureRate.Mean = mean(exposureRateMean, na.rm = TRUE),
+    exposureRate.SD = sd(exposureRateMean, na.rm = TRUE),
+    unUsedItem.Mean = mean(unUsedItemN, na.rm = TRUE),
+    unUsedItem.SD = sd(unUsedItemN, na.rm = TRUE),
+    testLength.Mean = mean(testLengthMean, na.rm = TRUE),
+    testLength.SD = sd(testLengthMean, na.rm = TRUE),
+    profileRecoveryRate.Mean = mean(profileRecoveryRate, na.rm = TRUE),
+    profileRecoveryRate.SD = sd(profileRecoveryRate, na.rm = TRUE),
+    attributeRecoveryRate.Mean = mean(attributeRecoveryRate, na.rm = TRUE),
+    attributeRecoveryRate.SD = sd(attributeRecoveryRate, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+
+# Change the value of condition
+nItemsInPool_map = setNames(c(40, 105), c(1, 2))
+initialPilotSampleSize_map = setNames(c(30, 300, 2000), c(1, 2, 3))
+nNewStudents_map = setNames(c(30, 300), c(1, 2))
+itemFunction_map = setNames(c("S1", "S10", "Full", "EAP", "MAP"), c(1, 2, 3, 4, 5))
+stopCriterion_map = setNames(c(0.7, 0.9), c(1, 2))
+
+
+resultsLabelled = resultsAggregated %>%
+  mutate(
+    nItemsInPool = nItemsInPool_map[as.character(nItemsInPool)],
+    initialPilotSampleSize = initialPilotSampleSize_map[as.character(initialPilotSampleSize)],
+    nNewStudents = nNewStudents_map[as.character(nNewStudents)],
+    itemUpdateFunction = itemFunction_map[as.character(itemUpdateFunction)],
+    itemSummaryFunction = itemFunction_map[as.character(itemSummaryFunction)],
+    stopCriterion = stopCriterion_map[as.character(stopCriterion)]
+  )
+
+# Save the newly labelled data to a new CSV file
+write.csv(resultsLabelled, "resultsLabelled.csv", row.names = FALSE)
+
+
+# Get the current column names
+original_names = names(resultsLabelled)
+
+# First, replace "betaLambda" with "betaSlope"
+temp_names = gsub("betaLambda", "betaSlope", original_names)
+
+# Then, on the result, replace "varLambda" with "varSlope"
+temp_names = gsub("varLambda", "errorVarianceSlope", temp_names)
+
+# Then, on the result, replace "varLambda" with "varSlope"
+new_names = gsub("varIntercept", "errorVarianceIntercept", temp_names)
+
+# Assign the final, corrected names back to the dataframe
+names(resultsLabelled) = new_names
+
+
+
+# # Aggregate by three conditions and plot
+# plotBy3Factors = function(df, y_mean, y_sd, cond1_str, cond2_str, cond3_str, y_label, color_label,
+#                            sample, pool, stop) {
+#
+#   # Define the desired order for the facet levels
+#   facet_level_order = c("S1", "S10", "Full", "EAP", "MAP")
+#
+#   # Convert columns to factors with the correct, custom level order
+#   df = df %>%
+#     dplyr::mutate(
+#       !!cond1_str := factor(.data[[cond1_str]], levels = facet_level_order),
+#       !!cond2_str := factor(.data[[cond2_str]], levels = facet_level_order),
+#       !!cond3_str := factor(.data[[cond3_str]])
+#     )
+#
+#   # Create the plot
+#   plot_object = ggplot(df, aes(x = nCalibration, y = .data[[y_mean]], color = .data[[cond3_str]])) +
+#     geom_ribbon(
+#       aes(
+#         ymin = .data[[y_mean]] - .data[[y_sd]],
+#         ymax = .data[[y_mean]] + .data[[y_sd]],
+#         fill = .data[[cond3_str]]
+#       ),
+#       alpha = 0.2,
+#       color = NA
+#     ) +
+#     geom_line(linewidth = 0.5) +
+#     geom_point(size = 0.8) +
+#     facet_grid(
+#       as.formula(paste(cond1_str, "~", cond2_str)),
+#       labeller = labeller(
+#         .rows = function(value) paste("Update: ", value),
+#         .cols = function(value) paste("Summary: ", value)
+#       )
+#     ) +
+#     labs(
+#       title = paste("Sample:", sample, " Pool:", pool, " Stop:", stop),
+#       x = '# of Calibration',
+#       y = y_label,
+#       color = color_label,
+#       fill = color_label
+#     ) +
+#     scale_color_brewer(palette = "Set1") +
+#     scale_fill_brewer(palette = "Set1") +
+#     theme_bw(base_size = 12) +
+#     theme(
+#       plot.title = element_text(hjust = 0.5),
+#       legend.position = "bottom",
+#       panel.spacing = unit(1, "lines")
+#     )
+#
+#   # Conditionally set y-axis limits for plots
+#   if (grepl("betaInterceptBias|betaSlopeBias", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 0.5))
+#   } else if (grepl("betaInterceptRMSE|betaSlopeRMSE", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 0.8))
+#   } else if (grepl("errorVarianceInterceptBias", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 1))
+#   } else if (grepl("errorVarianceInterceptRMSE", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 1))
+#   } else if (grepl("exposureRate", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 0.8))
+#   } else if (grepl("testLength", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0, 30))
+#   } else if (grepl("profile", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0.3, 0.9))
+#   } else if (grepl("attribute", y_mean, ignore.case = TRUE)) {
+#     plot_object = plot_object + coord_cartesian(ylim = c(0.6, 1))
+#   }
+#
+#   # Return the plot object
+#   return(plot_object)
+# }
+#
+#
+# # 1. Define the base names of all y-variables you want to plot
+# y_vars_to_plot = c(
+#   "betaInterceptBias", "betaSlopeBias", "errorVarianceInterceptBias", "errorVarianceSlopeBias",
+#   "betaInterceptRMSE", "betaSlopeRMSE", "errorVarianceInterceptRMSE", "errorVarianceSlopeRMSE",
+#   "exposureRate", "unUsedItem","testLength",
+#   "profileRecoveryRate", "attributeRecoveryRate"
+# )
+#
+# # Outer loop for your simulation conditions
+# for(sample in initialPilotSampleSize_map) {
+#   for(pool in nItemsInPool_map) {
+#     for(stop in stopCriterion_map) {
+#
+#       print(paste0("sample", sample, "_pool", pool, "_stop", stop))
+#
+#       # Filter the data once for the current set of conditions
+#       plotData = resultsLabelled %>%
+#         dplyr::filter(initialPilotSampleSize == sample,
+#                       nItemsInPool == pool,
+#                       stopCriterion == stop)
+#
+#       # 2. Inner loop to create a plot for each y-variable
+#       for (y_base in y_vars_to_plot) {
+#
+#         # Dynamically create the column names for mean and SD
+#         y_mean_col = paste0(y_base, ".Mean")
+#         y_sd_col = paste0(y_base, ".SD")
+#
+#         # Dynamically create a nice label for the y-axis
+#         y_axis_label = tools::toTitleCase(gsub("([a-z])([A-Z])", "\\1 \\2", y_base))
+#
+#         # Call the plotting function
+#         current_plot = plotBy3Factors(
+#           df = plotData,
+#           y_mean = y_mean_col,
+#           y_sd = y_sd_col,
+#           cond1_str = "itemUpdateFunction",
+#           cond2_str = "itemSummaryFunction",
+#           cond3_str = "nNewStudents",
+#           y_label = y_axis_label,
+#           color_label = '# of New Students',
+#           sample = sample,
+#           pool = pool,
+#           stop = stop
+#         )
+#
+#         # Dynamically create the file name and save the plot
+#         file_name_label = paste0("sample", sample, "_pool", pool, "_stop", stop)
+#         file_path = file.path(paste0("plot_", y_base, "_", file_name_label, ".pdf"))
+#         ggsave(file_path, plot = current_plot, width = 11, height = 8.5)
+#
+#       }
+#     }
+#   }
+# }
+
+
+
+#-----------------------------------------------------------
+# New plot: Use when summary and update has the same value
+#------------------------------------------------------------
+
+plotBy3FactorsNew = function(df, y_mean, cond1_str, cond2_str, cond3_str, y_label, color_label,
+                              newStudents, stop) {
+
+  # Define the desired order for the levels
+  custom_level_order = c("S1", "S10", "Full", "EAP", "MAP")
+
+  # Convert columns to factors, applying the custom order to cond3_str
+  df = df %>%
+    dplyr::mutate(
+      !!cond1_str := factor(.data[[cond1_str]]),
+      !!cond2_str := factor(.data[[cond2_str]]),
+      !!cond3_str := factor(.data[[cond3_str]], levels = custom_level_order)
+    )
+
+  # Create the plot
+  plot_object = ggplot(df, aes(x = nCalibration, y = .data[[y_mean]], color = .data[[cond3_str]])) +
+    geom_line(linewidth = 0.5) +
+    geom_point(size = 0.8) +
+    facet_grid(
+      as.formula(paste(cond1_str, "~", cond2_str)),
+      labeller = labeller(
+        .rows = function(value) paste("Pool: ", value),
+        .cols = function(value) paste("Sample Size: ", value)
+      )
+    ) +
+    labs(
+      title = paste("New Students:", newStudents, " Stop:", stop),
+      x = '# of Calibration',
+      y = y_label,
+      color = color_label,
+      fill = color_label
+    ) +
+    scale_color_brewer(palette = "Set1") +
+    scale_fill_brewer(palette = "Set1") +
+    theme_bw(base_size = 12) +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      legend.position = "bottom",
+      panel.spacing = unit(1, "lines")
+    )
+
+  # Conditionally set y-axis limits for plots
+  if (grepl("betaInterceptBias|betaSlopeBias", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 0.5))
+  } else if (grepl("betaInterceptRMSE|betaSlopeRMSE", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 0.8))
+  } else if (grepl("errorVarianceInterceptBias", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 1))
+  } else if (grepl("errorVarianceInterceptRMSE", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 1))
+  } else if (grepl("exposureRate", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 0.8))
+  } else if (grepl("testLength", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0, 30))
+  } else if (grepl("profile", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0.3, 0.9))
+  } else if (grepl("attribute", y_mean, ignore.case = TRUE)) {
+    plot_object = plot_object + coord_cartesian(ylim = c(0.6, 1))
   }
 
-  return(statistics)
-
+  # Return the plot object
+  return(plot_object)
 }
 
-# Functions for plotting by factor =============================================
-plotByFactor = function(criteria, criteriaName, conditionsMatrix) {
-browser()
-  # get statistics by factor
-  statistics = summaryByFactor(criteria = criteria, conditionsMatrix = conditionsMatrix)
 
-  par(mfrow = c(2,2))
-  # stop criteria =======================
-  stop = statistics[,c("stop1.mean","stop2.mean")]
-  matplot(stop,
-          type="l",
-          ylab=criteriaName,
-          main="Stop Criteria",
-          col=1:2,
-          lty=1
-          )
+# Remain when Summary and Update have the same value
+resultsFiltered = resultsLabelled %>%
+  filter(itemSummaryFunction == itemUpdateFunction)
 
-  legend("topright",
-         legend=c("0.7","0.8"),
-         col=1:2,
-         lty=1
-         )
+# save plots
+y_vars_to_plot = c("betaInterceptBias","betaSlopeBias","errorVarianceInterceptBias","errorVarianceSlopeBias",
+                   "betaInterceptRMSE", "betaSlopeRMSE", "errorVarianceInterceptRMSE", "errorVarianceSlopeRMSE",
+                   "profileRecoveryRate","attributeRecoveryRate","testLength","exposureRate")
 
+nNewStudents = nNewStudents_map[1]
+stop = stopCriterion_map[1]
+y_base = y_vars_to_plot[1]
+# Outer loop for your simulation conditions
+for(newStudents in nNewStudents_map) {
+  for(stop in stopCriterion_map) {
 
-  # item summary function ====================
-  summary = statistics[,c("summary1.mean","summary2.mean","summary3.mean","summary4.mean")]
-  matplot(summary,
-          type="l",
-          ylab=criteriaName,
-          main="Item Summary Function",
-          col=1:4,
-          lty=1
-          )
+    print(paste0("newStudents", newStudents, "_stop", stop))
 
-  legend("topright",
-         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
-         col = 1:4,
-         lty = 1
-         )
+    # Filter the data once for the current set of conditions
+    plotData = resultsFiltered %>%
+      dplyr::filter(nNewStudents == newStudents,
+                    stopCriterion == stop)
+
+    # 2. Inner loop to create a plot for each y-variable
+    for (y_base in y_vars_to_plot) {
+      print(paste0(y_base))
+      # Dynamically create the column names for mean and SD
+      y_mean_col = paste0(y_base, ".Mean")
+
+      # Dynamically create a nice label for the y-axis
+      y_axis_label = tools::toTitleCase(gsub("([a-z])([A-Z])", "\\1 \\2", y_base))
 
 
-  # item update function =====================
-  update = statistics[,c("update1.mean","update2.mean","update3.mean","update4.mean")]
-  matplot(update,
-          type="l",
-          ylab=criteriaName,
-          main="Item Update Function",
-          col=1:4,
-          lty=1
-          )
-
-  legend("topright",
-         legend=c("Sample 1","Sample 10", "Mean", "Mode"),
-         col = 1:4,
-         lty = 1
-         )
+      current_plot = plotBy3FactorsNew(
+        df = plotData,
+        y_mean = y_mean_col,
+        cond1_str = "nItemsInPool",
+        cond2_str = "initialPilotSampleSize",
+        cond3_str = "itemSummaryFunction",
+        y_label = y_axis_label,
+        color_label = 'Summary/Update Method',
+        newStudents = newStudents,
+        stop = stop
+      )
 
 
-  # pilot sample size function ================
-  size = statistics[,c("size1.mean","size2.mean","size3.mean")]
-  matplot(size,
-          type="l",
-          ylab=criteriaName,
-          main="Pilot Sample Size",
-          col=1:3,
-          lty=1
-          )
+      # Dynamically create the file name and save the plot
+      file_name_label = paste0("NewStudents", newStudents, "_stop", stop)
+      file_path = file.path(paste0("plot2_", y_base, "_", file_name_label, ".png"))
+      ggsave(file_path, plot = current_plot, width = 11, height = 8.5)
 
-  legend("topright",
-         legend=c("30","300", "2000"),
-         col = 1:3,
-         lty = 1
-         )
-
-
+    }
+  }
 }
-
-pdf("plotsByFactor.pdf")
-for (i in 1:length(criteria)){
-  plotByFactor(criteria = criteria[i],criteriaName = criteriaName[i], conditionsMatrix=conditionsMatrix)
-}
-dev.off()
-
-
-
-
-# # check maxRhat
-# maxrhat = NULL
-# for (i in 1:40) {
-#   maxrhat= c(maxrhat, calibrationData[[i]]$maxRhat)
-# }
-# plot(maxrhat)
-# abline(a=1.1, b=0)
-
-# copied rep: 313 391 397 434 463 477
 

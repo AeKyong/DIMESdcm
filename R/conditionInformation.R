@@ -6,7 +6,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
   conditions = list(
     nItemsInPool = c(40, 105),
     initialPilotSampleSize = c(30, 300, 2000),
-    nNewStudents = c(30),
+    nNewStudents = c(30, 300),
     itemUpdateFunction = c(
       "Sample 1",
       "Sample 10",
@@ -21,7 +21,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
       "EAP",
       "Mode"
     ),
-    stopCriterion = c(.6, .8)
+    stopCriterion = c(.7, .9)
   )
 
 
@@ -42,7 +42,7 @@ conditionInformation = function(arrayNumber, nReplicationsPerCondition = 100, nC
       basevector = unlist(lapply(X = conditions, FUN = length))
     ) + 1
   }
-
+# browser()
   # populate condition values
   nItemsInPool = conditions$nItemsInPool[conditionsMatrix[conditionNumber,1]]
   initialPilotSampleSize = conditions$initialPilotSampleSize[conditionsMatrix[conditionNumber,2]]

@@ -1,19 +1,20 @@
-Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Package: DIMESdcm
+Title: Bayesian Adaptive Testing Using Explanatory Diagnostic Classification Models
+Version: 0.0.1
+Authors@R: c(
+    person("Ae Kyong", "Jung", 
+            email = "aekyong-jung@uiowa.edu", 
+            role = c("aut", "cre"),
+            comment = c(ORCID = "0000-0003-0665-4876"))
+    person("Jonathan", "Templin", 
+            email = "jonathan-templin@uiowa.edu", 
+            role = c("aut"),
+            comment = c(ORCID = "0000-0001-7616-0973"))
+)
+   
+Description: Provides functions to conduct Bayesian adaptive testing for cognitive diagnosis. This package implements a flexible framework for specifying explanatory variables within diagnostic classification models (DCMs). Key functions allow for item selection, ability estimation, and simulation of adaptive testing procedures based on entropy measures such as Shannon Entropy.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
 Encoding: UTF-8
-LazyData: true
-Depends: 
-    abind,
-    R (>= 2.10),
-    plumber,
-    coda,
-    modeest,
-    parallel,
-    readxl,
-    extraDistr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2

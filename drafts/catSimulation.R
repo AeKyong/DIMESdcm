@@ -1,7 +1,6 @@
 rm(list = ls())
 devtools::load_all(".")
 
-# install.packages("modeest", repos = "http://cran.us.r-project.org",lib = "/Users/aekjung/DIMESdcm/Rlibs")
 library(DIMESdcm)
 library(parallel)
 library(R2jags)
@@ -13,11 +12,11 @@ library(readxl)
 library(bayesplot)
 library(extraDistr)
 library(modeest)
-# library(modeest, lib.loc = "/Users/aekjung/DIMESdcm/Rlibs")
+
 
 # grab command line arguments
 # arrayNumber = as.numeric(commandArgs(trailingOnly = TRUE)[1])
-arrayNumber = 129
+arrayNumber = 1
 
 set.seed(arrayNumber)
 
@@ -211,7 +210,7 @@ itemcovsPilot = model.matrix(
 data("itemParameterChains")
 
 # implement condition values in simulation
-simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 1, nCores = 4)
+simulationSpecs = conditionInformation(arrayNumber= arrayNumber, nReplicationsPerCondition = 100, nCores = 4)
 
 
 # generate simulation data =====================================================
@@ -229,24 +228,24 @@ runningData = simDataList$simData
 itemcovs = simDataList$simItemCovs
 abilityQ = simDataList$simAbilityQ
 estimatedParameters = NULL
-estimatedProfileProbability = NULL
+estimatedProfiles = NULL
 simItemParameterChains = NULL
 nStartingStudents = nrow(simDataList$simData)
 
 
 # prior for var_intercept and var_lambda ~ logNormal(A,B)
-# if (nStartingStudents == 30){
+if (nStartingStudents == 30){
   varPriorParaAfirst = -0.5
   varPriorParaBfirst = 0.1
 
-#   } else if (nStartingStudents == 300) {
-#     varPriorParaAfirst = -0.5
-#     varPriorParaBfirst = 1.9
-#
-#   } else if (nStartingStudents == 2000){
-#     varPriorParaAfirst = -0.5
-#     varPriorParaBfirst = 13.1
-# }
+  } else if (nStartingStudents == 300) {
+    varPriorParaAfirst = -0.5
+    varPriorParaBfirst = 1.9
+
+  } else if (nStartingStudents == 2000){
+    varPriorParaAfirst = -0.5
+    varPriorParaBfirst = 13.1
+}
 
 
 # start while loop =============================================================
@@ -259,27 +258,27 @@ print(calibration)
 
 
   # increase in SD of prior distribution with the increase in the number of students
-  # if (nStartingStudents == 30){
+  if (nStartingStudents == 30){
     # increase the variance of the prior distribution after each calibration
     varPriorParaA = varPriorParaAfirst
     varPriorParaB = varPriorParaBfirst + 0.2*(calibration-1)
 
-  # } else if (nStartingStudents == 300){
-  #   varPriorParaA = varPriorParaAfirst
-  #   varPriorParaB = varPriorParaBfirst + 0.2*(calibration-1)
-  #
-  # } else if (nStartingStudents == 2000){
-  #   varPriorParaA = varPriorParaAfirst
-  #   varPriorParaB = varPriorParaBfirst
-  #
-  # }
+  } else if (nStartingStudents == 300){
+    varPriorParaA = varPriorParaAfirst
+    varPriorParaB = varPriorParaBfirst + 0.2*(calibration-1)
+
+  } else if (nStartingStudents == 2000){
+    varPriorParaA = varPriorParaAfirst
+    varPriorParaB = varPriorParaBfirst
+
+  }
 
 
 
   jagsEDCMestimates = estimateJagsEDCM(itemcovs = itemcovs,
                                        abilityQ = abilityQ,
                                        modelData = runningData,
-                                       betaInterceptInitMean = 3,
+                                       betaInterceptInitMean = 3, # Better to be N(0, 10) not to constrain them as positive?
                                        betaInterceptInitSD = .1,
                                        betaLambdaInitMean = 3,
                                        betaLambdaInitSD = .1,
@@ -358,12 +357,13 @@ print(calibration)
       for (i in 1:length(interceptCols)){
         interceptCov = betaInterceptCols[which(simDataList$simItemCovs[i,]==1)]
         simItemParameterChains[, interceptCols[i]] = apply(simItemParameterChains[,interceptCov], 1, sum)+
+          # rlnorm(n=nrow(simItemParameterChains), -0.5, 13.1)
           rnorm(n=nrow(simItemParameterChains), mean = 0, sd = 1)
       }
       for (i in 1:length(lambdaCols)){
        lambdaCov = betaLambdaCols[which(simDataList$simItemCovs[i,]==1)]
        simItemParameterChains[, lambdaCols[i]] = apply(simItemParameterChains[,lambdaCov], 1, sum)+
-         # rgamma(n=nrow(simItemParameterChains), 1e-3, 1e-3)
+         # rlnorm(n=nrow(simItemParameterChains), -0.5, 13.1)
          rnorm(n=nrow(simItemParameterChains), mean = 0, sd = 1)
       }
 
@@ -605,7 +605,9 @@ print(calibration)
                  "simDataList",
                  "simulationSpecs",
                  "selectNewItem",
-                 "nProfiles"),
+                 "nProfiles",
+                 "dec2bin",
+                 "nAttributes"),
      envir = environment()
    )
 
@@ -648,12 +650,12 @@ print(calibration)
    )
 
 
-   estimatedProfileProbability = rbind(
-     estimatedProfileProbability,
-     result[[1]]$estimatedProfileProbability,
-     result[[2]]$estimatedProfileProbability,
-     result[[3]]$estimatedProfileProbability,
-     result[[4]]$estimatedProfileProbability
+   estimatedProfiles = rbind(
+     estimatedProfiles,
+     result[[1]]$estimatedProfiles,
+     result[[2]]$estimatedProfiles,
+     result[[3]]$estimatedProfiles,
+     result[[4]]$estimatedProfiles
    )
 
 
@@ -661,5 +663,5 @@ print(calibration)
 
 }
 
-save(estimatedParameters, estimatedProfileProbability, runningData, calibrationData, simDataList, file= paste0("rep_", arrayNumber,".RData"))
+save(estimatedParameters, estimatedProfiles, runningData, calibrationData, simDataList, file= paste0("rep_", arrayNumber,".RData"))
 

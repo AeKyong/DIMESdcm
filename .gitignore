@@ -48,3 +48,9 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 .Rproj.user
+.DS_Store
+.quarto
+
+# Ignore data files
+*.csv
+*.RData
