@@ -28,5 +28,4 @@
 #$ -l localscratch_free=200G
 
 #####End Resource Selection Directives#####
-#apptainer run ~/argonstack.sif R CMD BATCH catSimulation.R $SGE_TASK_ID
 apptainer -v exec argonstack.sif Rscript drafts/catSimulation.R $SGE_TASK_ID
